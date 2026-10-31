@@ -25,18 +25,17 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
-        fsGroup: 10001
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: web
-          # pinned by digest: what you scanned is what runs
-          # replace with the digest you actually scanned:
-          #   trivy image nginx:1.27.3-alpine
-          #   docker inspect --format='{{index .RepoDigests 0}}' nginx:1.27.3-alpine
-          image: nginx:1.27.3-alpine
+          # explicit version tag (the image-provenance policy refuses :latest and untagged).
+          # nginx-unprivileged listens on 8080 and runs without root, so the pod can
+          # actually start under runAsNonRoot + readOnlyRootFilesystem on a real cluster.
+          image: nginxinc/nginx-unprivileged:1.27.3-alpine
           ports:
             - containerPort: 8080
           securityContext:
@@ -59,8 +58,12 @@ spec:
               mountPath: /var/cache/nginx
             - name: run
               mountPath: /var/run
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: cache
           emptyDir: {}
         - name: run
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}

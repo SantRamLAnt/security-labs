@@ -1,0 +1,70 @@
+# LAB D — admission control on a REAL Kubernetes cluster (kind, inside the CI runner).
+# Gate 0 proves the policy logic with the Kyverno CLI against files. This proves the
+# webhook: the API server itself refuses the insecure Deployment and admits the
+# conforming one. The cluster exists only for the length of the job ($0).
+# Control mapping: NERC CIP-007-6 R5, CIP-010-4 R1, NIST CM-6, CM-7, AC-6.
+
+name: Lab D · Live admission control
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "k8s/**", ".github/workflows/lab-d-cluster.yml" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  admission:
+    name: "kind + Kyverno: refuse insecure, admit conforming"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: lab-d
+
+      - name: Install Kyverno (admission controller)
+        run: |
+          helm repo add kyverno https://kyverno.github.io/kyverno/
+          helm install kyverno kyverno/kyverno -n kyverno --create-namespace --version 3.3.9 --wait --timeout 5m
+          kubectl -n kyverno get pods
+
+      - name: Apply the baseline policies and wait until they are enforcing
+        run: |
+          kubectl apply -f k8s/policies/kyverno-baseline.yaml
+          kubectl wait --for=condition=Ready clusterpolicy --all --timeout=180s
+          kubectl get clusterpolicy
+
+      - name: Insecure Deployment must be REFUSED by the API server
+        run: |
+          kubectl create namespace workloads
+          set +e
+          kubectl apply -f k8s/manifests/insecure-deployment.yaml > refused.out 2>&1
+          rc=$?
+          set -e
+          cat refused.out
+          { echo '### kubectl apply insecure-deployment.yaml (exit '"$rc"')'; echo '```'; cat refused.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$rc" -eq 0 ]; then
+            echo "::error::The insecure Deployment was ADMITTED. Admission control is not working."; exit 1
+          fi
+          # and nothing was created behind the refusal
+          if kubectl -n workloads get deployment outage-portal >/dev/null 2>&1; then
+            echo "::error::Deployment exists despite the refusal."; exit 1
+          fi
+
+      - name: Conforming Deployment must be ADMITTED and actually run
+        run: |
+          kubectl apply -f k8s/manifests/secure-deployment.yaml 2>&1 | tee admitted.out
+          kubectl -n workloads rollout status deployment/outage-portal --timeout=180s 2>&1 | tee -a admitted.out
+          kubectl -n workloads get pods -o wide 2>&1 | tee -a admitted.out
+          { echo '### kubectl apply secure-deployment.yaml'; echo '```'; cat admitted.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Policy reports (what Kyverno recorded)
+        if: always()
+        run: |
+          kubectl get policyreport -A 2>&1 | tee report.out || true
+          { echo '### kubectl get policyreport -A'; echo '```'; cat report.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
