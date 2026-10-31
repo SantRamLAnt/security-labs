@@ -1,0 +1,25 @@
+# EXCERPT of Harness security-gates #2, stage lab-j-grid-model-and-perimeter. Long FAIL lines wrapped for width; grid refusals omitted.
+  Lab J — grid model and perimeter policy tests
+  ---------------------------------------------
+  PASS  grid-normal            0 denial(s), expected 0
+  PASS  grid-bad               6 denial(s), expected 6
+  PASS  esp-secure             0 denial(s), expected 0
+  PASS  esp-insecure           5 denial(s), expected 5
+
+  4 passed, 0 failed
+
+== the insecure perimeter, refused ==
+FAIL - labs/lab-j/infra/esp-insecure/main.tf - esp - [NERC CIP-005-7 R1.1] [NIST SC-7(4)]
+       azurerm_public_ip.cc_hmi puts a public address inside the control-centre zone
+FAIL - labs/lab-j/infra/esp-insecure/main.tf - esp - [NERC CIP-005-7 R1.2, R2.1] [NIST SC-7, AC-17]
+       cc_rdp_from_intermediate allows inbound to the control-centre zone from 10.40.1.0/24;
+       only the intermediate system (10.40.2.0/27) may cross the perimeter
+FAIL - labs/lab-j/infra/esp-insecure/main.tf - esp - [NERC CIP-005-7 R1.2, R2.1] [NIST SC-7, AC-17]
+       cc_vendor_temp allows inbound to the control-centre zone from Internet;
+       only the intermediate system (10.40.2.0/27) may cross the perimeter
+FAIL - labs/lab-j/infra/esp-insecure/main.tf - esp - [NERC CIP-005-7 R1.3] [NIST SC-7(5)]
+       the control-centre NSG has no explicit deny-all inbound rule; deny-by-default must be stated, not inherited
+FAIL - labs/lab-j/infra/esp-insecure/main.tf - esp - [NERC CIP-005-7 R1.3]
+       cc_vendor_temp grants access with no documented reason; CIP-005 R1.3 requires the reason for every permission
+
+5 tests, 0 passed, 0 warnings, 5 failures, 0 exceptions
