@@ -1,0 +1,7 @@
+$ # Gate 0's kyverno step, as GitHub Actions runs it (bash --noprofile --norc -eo pipefail)
+$ bash --noprofile --norc -eo pipefail g0.sh; echo "exit=$?"
+exit=1
+$ # the same script as it was "verified" locally (no -e)
+$ bash g0.sh; echo "exit=$?"
+insecure manifest denials: 8
+exit=0

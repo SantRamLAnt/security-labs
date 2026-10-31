@@ -1,0 +1,51 @@
+# NOTE: condensed from the run summary page (some lines summarised, e.g. "(+8 more ...)"). The full output is in the linked run.
+Security Gates run #3 — commit 6a672e3 — RED on gates 1-4, Gate 0 green
+https://github.com/SantRamLAnt/security-labs/actions/runs/41217744686
+
+Gate 0 OPA policy unit tests (exit 0)
+  PASS insecure 3 denial(s)
+  PASS secure 0 denial(s)
+  PASS untagged 1 denial(s)
+  PASS noop 0 denial(s)
+  PASS hcl-bad 3 denial(s)
+  PASS hcl-good 0 denial(s)
+  6 passed, 0 failed
+Gate 0 admission policy self-test
+  insecure manifest denials: 8
+  secure manifest denials: 0
+Gate 0 secret-scanner canary
+  run-time generated key: detected by gitleaks (Gate 1 is evaluating)
+  AWS documentation example key AKIAIOSFODNN7EXAMPLE: NOT detected (allowlisted by gitleaks defaults)
+
+Gate 1 gitleaks, full history (exit 1)
+  Finding: GRIDOPS_API_KEY = "REDACTED" # synthetic, gene...
+  RuleID: generic-api-key
+  Entropy: 4.953056
+  File: app/config.py
+  Line: 15
+  Commit: 508b684875d6fe4e48c798b03e24cd96e5b4fb99
+  Fingerprint: 508b684875d6fe4e48c798b03e24cd96e5b4fb99:app/config.py:generic-api-key:15
+  4:02PM INF 3 commits scanned.
+  4:02PM WRN leaks found: 1
+
+Gate 2 Checkov (exit 1)
+  Passed checks: 4, Failed checks: 11, Skipped checks: 0
+  CKV_AZURE_44  Storage Account latest TLS ............ FAILED azurerm_storage_account.bad
+  CKV_AZURE_190 Storage blobs restrict public access .. FAILED
+  CKV_AZURE_59  Storage accounts disallow public access FAILED
+  (+8 more: queue logging, replication, soft delete, SAS expiry, shared key, private endpoint, anonymous blob, CMK)
+Gate 2 Conftest, own OPA policy (exit 1)
+  FAIL - infra/main.tf - main - [CIS Azure: Minimum TLS] [NIST 800-53 SC-8] azurerm_storage_account.bad uses TLS1_0; TLS1_2 is the required minimum
+  FAIL - infra/main.tf - main - [CIS Azure: Secure transfer required] [NIST 800-53 SC-8] azurerm_storage_account.bad allows unencrypted HTTP
+  FAIL - infra/main.tf - main - [CIS Azure: Storage public access] [NIST 800-53 SC-28] [NERC CIP-011-3 R1] azurerm_storage_account.bad permits public blob access
+  8 tests, 5 passed, 0 warnings, 3 failures, 0 exceptions
+
+Gate 3 Semgrep (exit 1)
+  app/handler.py
+  python.lang.security.audit.subprocess-shell-true.subprocess-shell-true  ❰❰ Blocking ❱❱
+    20┆ return subprocess.call(cmd, shell=True)
+  Findings: 1 (1 blocking) · Rules run: 187 · Targets scanned: 3
+
+Gate 4 Trivy (exit 1)
+  │ requirements.txt │ pip  │        1        │
+  │ pyyaml  │ CVE-2020-14343 │ CRITICAL │ fixed  │ 5.3.1 │ 5.4 │ PyYAML: incomplete fix for CVE-2020-1747 │

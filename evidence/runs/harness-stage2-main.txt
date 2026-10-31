@@ -1,0 +1,43 @@
+1	0.0s	Executing the following command(s):
+2	0.0s	git clone --quiet https://github.com/SantRamLAnt/security-labs.git src && cd src
+3	0.0s	./ci/run-gates.sh
+4	35.3s	
+5	0.0s	::::: Gate 1 secrets (gitleaks, full history)
+6	0.1s	4:35PM INF 6 commits scanned.
+7	0.0s	4:35PM INF scan completed in 29.6ms
+8	0.0s	4:35PM INF no leaks found
+9	0.0s	
+10	0.0s	::::: Gate 2 IaC (Checkov)
+11	2.7s	terraform scan results:
+12	0.0s	
+13	0.0s	Passed checks: 12, Failed checks: 0, Skipped checks: 3
+14	0.0s	
+15	0.0s	
+16	0.5s	
+17	0.0s	::::: Gate 2 IaC (Conftest, own OPA policy)
+18	0.0s	
+19	0.0s	8 tests, 8 passed, 0 warnings, 0 failures, 0 exceptions
+20	0.0s	
+21	0.0s	::::: Gate 3 SAST (Semgrep)
+22	1.7s	
+23	0.0s	::::: Gate 4 dependencies (Trivy)
+24	5.4s	
+25	0.0s	Report Summary
+26	0.0s	
+27	0.0s	┌──────────────────┬──────┬─────────────────┐
+28	0.0s	│      Target      │ Type │ Vulnerabilities │
+29	0.0s	├──────────────────┼──────┼─────────────────┤
+30	0.0s	│ requirements.txt │ pip  │        0        │
+31	0.0s	└──────────────────┴──────┴─────────────────┘
+32	0.0s	Legend:
+33	0.0s	- '-': Not scanned
+34	0.0s	- '0': Clean (no security findings detected)
+35	0.0s	
+36	0.0s	
+37	0.0s	=========== RESULT @ 698aaa5 Lab E: portable gate runner and a Harness pipeline that tests the gates
+38	0.0s	PASS  Gate 1 secrets (gitleaks, full history)
+39	0.0s	PASS  Gate 2 IaC (Checkov)
+40	0.0s	PASS  Gate 2 IaC (Conftest, own OPA policy)
+41	0.0s	PASS  Gate 3 SAST (Semgrep)
+42	0.0s	PASS  Gate 4 dependencies (Trivy)
+43	0.0s	gates failed: 0 of 5

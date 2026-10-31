@@ -1,0 +1,35 @@
+# EXCERPT of Harness execution security-gates #1, step run-gates-on-6a672e3 (54s, Success).
+# Lines 1-17 copied from the page text; lines 98-123 copied from the page text / step screenshot.
+# Elided lines are marked "...". Nothing retyped or tidied.
+1	0.0s	Executing the following command(s):
+2	0.0s	git clone --quiet https://github.com/SantRamLAnt/security-labs.git src && cd src
+3	0.0s	cp ci/run-gates.sh /tmp/run-gates.sh
+4	0.0s	git checkout --quiet 6a672e3
+5	0.0s	/tmp/run-gates.sh; n=$?
+6	0.0s	echo "expected 5 of 5 gates to fail on the known-bad commit; got $n"
+7	0.0s	[ "$n" -eq 5 ]
+8	42.7s	
+9	0.0s	::::: Gate 1 secrets (gitleaks, full history)
+10	0.1s	4:33PM INF 6 commits scanned.
+11	0.0s	4:33PM INF scan completed in 30.5ms
+12	0.0s	4:33PM WRN leaks found: 1
+13	0.0s	
+14	0.0s	::::: Gate 2 IaC (Checkov)
+15	2.5s	terraform scan results:
+16	0.0s	
+17	0.0s	Passed checks: 4, Failed checks: 11, Skipped checks: 0
+...
+98	0.0s	│ requirements.txt │ pip  │        1        │
+...
+107	0.0s	Total: 1 (HIGH: 0, CRITICAL: 1)
+...
+112	0.0s	│ pyyaml  │ CVE-2020-14343 │ CRITICAL │ fixed  │ 5.3.1             │ 5.4           │ PyYAML: incomple...
+...
+116	0.0s	=========== RESULT @ 6a672e3 Lab E: publish each gate's verbatim output to the run summary
+117	0.0s	FAIL  Gate 1 secrets (gitleaks, full history)
+118	0.0s	FAIL  Gate 2 IaC (Checkov)
+119	0.0s	FAIL  Gate 2 IaC (Conftest, own OPA policy)
+120	0.0s	FAIL  Gate 3 SAST (Semgrep)
+121	0.0s	FAIL  Gate 4 dependencies (Trivy)
+122	0.0s	gates failed: 5 of 5
+123	0.0s	expected 5 of 5 gates to fail on the known-bad commit; got 5

@@ -1,0 +1,14 @@
+$ terraform apply tf.plan   (remediated baseline only)
+azurerm_resource_group.lab: Creation complete after 24s [id=/subscriptions/<subscription-id>/resourceGroups/labasec-rg]
+azurerm_storage_account.good: Creation complete after 1m14s [id=/subscriptions/<subscription-id>/resourceGroups/labasec-rg/providers/Microsoft.Storage/storageAccounts/labasecgood01]
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+$ az storage account show  (what Azure actually holds, not what terraform says)
+Name           AllowBlobPublicAccess    MinimumTlsVersion    HttpsOnly    TeardownTag
+-------------  -----------------------  -------------------  -----------  -------------
+labasecgood01  False                    TLS1_2               True         yes
+
+$ terraform destroy
+azurerm_storage_account.good: Destruction complete after 2s
+azurerm_resource_group.lab: Destruction complete after 21s
+Destroy complete! Resources: 2 destroyed.

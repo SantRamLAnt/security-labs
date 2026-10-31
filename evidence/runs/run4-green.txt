@@ -1,0 +1,13 @@
+# NOTE: condensed from the run summary page into one line per gate. The full output is in the linked run.
+Security Gates run #4 — commit 279eb9b — GREEN on all five gates
+https://github.com/SantRamLAnt/security-labs/actions/runs/41218112892
+
+Gate 0  6 passed, 0 failed · insecure manifest denials: 8 · secure manifest denials: 0 · canary detected
+Gate 1  gitleaks, full history (exit 0)
+        4:07PM INF 4 commits scanned.
+        4:07PM INF no leaks found
+Gate 2  Checkov (exit 0)   Passed checks: 12, Failed checks: 0, Skipped checks: 3
+        Conftest (exit 0)  8 tests, 8 passed, 0 warnings, 0 failures, 0 exceptions
+Gate 3  Semgrep            Findings: 0 (0 blocking) · Rules run: 187 · Targets scanned: 3
+Gate 4  Trivy              │ requirements.txt │ pip  │        0        │
+                           Legend: '-': Not scanned   '0': Clean (no security findings detected)

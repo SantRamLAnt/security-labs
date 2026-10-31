@@ -1,0 +1,52 @@
+Lab D · Live admission control — run 41218412543 (kind cluster + Kyverno chart 3.3.9, inside GitHub Actions)
+https://github.com/SantRamLAnt/security-labs/actions/runs/41218412543
+
+kubectl apply insecure-deployment.yaml (exit 1)
+Error from server: error when creating "k8s/manifests/insecure-deployment.yaml": admission webhook "validate.kyverno.svc-fail" denied the request:
+
+resource Deployment/workloads/outage-portal was blocked due to the following policies
+
+image-provenance:
+  autogen-disallow-latest-tag: 'validation error: [CIS Kubernetes 5.5] [NIST 800-53
+    CM-2 Baseline Configuration] [NERC CIP-010-4 R1] An unpinned or :latest tag means
+    the running image is not necessarily the image that was scanned. Pin by digest,
+    or at minimum by an explicit version tag. rule autogen-disallow-latest-tag failed
+    at path /spec/template/spec/containers/0/image/'
+resource-limits-required:
+  autogen-require-limits: 'validation error: [NIST 800-53 SC-6 Resource Availability]
+    A container without limits can starve every other workload on the node. Availability
+    is a security property, not an operations one. rule autogen-require-limits failed
+    at path /spec/template/spec/containers/0/resources/limits/'
+restricted-pod-baseline:
+  autogen-drop-all-capabilities: 'validation error: [CIS Kubernetes 5.2.8-5.2.9] [NIST
+    800-53 CM-7 Least Functionality] Containers must drop ALL capabilities and add
+    back only what is required, with justification. rule autogen-drop-all-capabilities
+    failed at path /spec/template/spec/containers/0/securityContext/capabilities/drop/'
+  autogen-no-host-namespaces: 'validation error: [CIS Kubernetes 5.2.2-5.2.4] [NIST
+    800-53 SC-39] [NERC CIP-005-7 R1] hostNetwork, hostPID and hostIPC break container
+    isolation and expose the node''s namespaces to the workload. rule autogen-no-host-namespaces
+    failed at path /spec/template/spec/hostNetwork/'
+  autogen-no-hostpath-volumes: 'validation failure: [CIS Kubernetes 5.2.12] [NIST
+    800-53 AC-6] hostPath volumes mount the node filesystem into the container. Use
+    emptyDir, a ConfigMap, or a PersistentVolumeClaim.'
+  autogen-no-privilege-escalation: 'validation error: [CIS Kubernetes 5.2.5] [NIST
+    800-53 AC-6 Least Privilege] allowPrivilegeEscalation must be false. rule autogen-no-privilege-escalation
+    failed at path /spec/template/spec/containers/0/securityContext/allowPrivilegeEscalation/'
+  autogen-no-privileged-containers: 'validation error: [CIS Kubernetes 5.2.1] [NIST
+    800-53 CM-7 Least Functionality] [NERC CIP-007-6 R5] privileged: true is effectively
+    root on the node. Set securityContext.privileged to false. rule autogen-no-privileged-containers
+    failed at path /spec/template/spec/containers/0/securityContext/privileged/'
+  autogen-run-as-non-root: 'validation error: [CIS Kubernetes 5.2.6] [NIST 800-53
+    SC-39 Process Isolation] Containers must run as a non-root user. Set runAsNonRoot:
+    true. rule autogen-run-as-non-root[0] failed at path /spec/template/spec/securityContext/runAsNonRoot/
+    rule autogen-run-as-non-root[1] failed at path /spec/template/spec/containers/0/securityContext/runAsNonRoot/'
+
+kubectl apply secure-deployment.yaml
+deployment.apps/outage-portal created
+Waiting for deployment "outage-portal" rollout to finish: 0 of 1 updated replicas are available...
+deployment "outage-portal" successfully rolled out
+NAME                            READY   STATUS    RESTARTS   AGE   IP           NODE                  NOMINATED NODE   READINESS GATES
+outage-portal-775c7c5bd-vcbhm   1/1     Running   0          2s    10.244.0.9   lab-d-control-plane   <none>           <none>
+
+kubectl get policyreport -A
+No resources found
