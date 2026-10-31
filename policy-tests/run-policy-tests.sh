@@ -16,6 +16,8 @@
 #   secure    — the remediated baseline            → 0 denials
 #   untagged  — conforming but missing teardown    → exactly 1 denial
 #   noop      — bad config, but action is "no-op"  → 0 denials
+#   hcl-bad   — insecure Terraform SOURCE (what CI sees) → exactly 3 denials
+#   hcl-good  — remediated Terraform SOURCE            → 0 denials
 #
 # The last one is the test that matters most and is the one people forget.
 # The policy only evaluates create and update actions. Without this fixture,
@@ -61,6 +63,8 @@ check insecure tfplan-insecure.json 3
 check secure   tfplan-secure.json   0
 check untagged tfplan-untagged.json 1
 check noop     tfplan-noop.json     0
+check hcl-bad  hcl-insecure/main.tf 3
+check hcl-good hcl-secure/main.tf   0
 echo
 echo "  ${PASS} passed, ${FAIL} failed"
 echo

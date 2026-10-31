@@ -1,0 +1,3 @@
+# LAB E - planted finding for the dependency gate (Gate 4).
+# PyYAML 5.3.1 is affected by CVE-2020-14343 (arbitrary code execution, CRITICAL), fixed in 5.4.
+pyyaml==5.3.1

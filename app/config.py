@@ -1,17 +1,18 @@
 """
-LAB E - planted finding.
+LAB E - planted findings for the secret-scanning gate.
 
-The credential below is AWS's PUBLISHED EXAMPLE key from their own
-documentation. It is not a real credential and never was. It exists so the
-secret-scanning gate has something to catch.
+Both values below are FAKE. Neither is, or ever was, a real credential.
 
-Gate 1 should fail on this file. Removing these lines should make it pass.
-That before/after is the evidence.
+1. AWS's published documentation example key. Run #1 showed gitleaks (and trivy's
+   secret scanner) deliberately ignore it, so on its own it proves nothing.
+2. A random 40-character string generated for this lab on 31 Oct 2026, shaped like
+   an API key so the scanner has something real to catch. It unlocks nothing.
+
+Gate 1 must fail while (2) is in the code or the history.
 """
 
-# gitleaks:allow-is-NOT-set-here-on-purpose
-AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
-AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"          # documentation example: allowlisted by scanners
+GRIDOPS_API_KEY = "Vg3Oep8UUfJHRV05MdGwilP4xpgrFpEkuTD3mIZF"   # synthetic, generated for this lab
 
 DB_HOST = "localhost"
 DB_PORT = 5432

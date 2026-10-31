@@ -1,12 +1,11 @@
 # LAB E — DevSecOps security gates
 # Five BLOCKING gates. Advisory scanning gets ignored; a failed build does not.
-# Control mapping: NERC CIP-010-4 R1, CIP-013-2 R1, NIST SA-11, SA-15, CM-3, CA-2
+# Control mapping: NERC CIP-010-4 R1, CIP-013-2 R1, NIST SA-11, SA-15, CM-3, RA-5
 #
-# Gate 0 is the one nobody builds: it tests the POLICIES. A policy gate that is
-# wrong fails open silently while everyone believes a control is in place, and
-# "zero violations" and "zero rules evaluated" look identical in a dashboard.
-# If the policies cannot prove they still refuse a known-bad input, no later
-# gate's green tick means anything.
+# Gate 0 tests the POLICIES and the SCANNERS. A gate that has silently stopped
+# evaluating fails open: "zero violations" and "zero rules evaluated" look identical.
+# Run #1 of this pipeline proved it — two gates passed green with the planted
+# problems still in the repository (see labs/lab-e-README.md, "Findings").
 
 name: Security Gates
 
@@ -18,72 +17,83 @@ on:
 
 permissions:
   contents: read
-  security-events: write
+
+env:
+  CONFTEST_VERSION: "0.56.0"
+  KYVERNO_VERSION: "1.13.4"
+  GITLEAKS_VERSION: "8.21.2"
+  TRIVY_VERSION: "v0.76.1"   # pinned: older trivy release assets were withdrawn upstream
 
 jobs:
 
   policy-self-test:
-    name: "Gate 0 · Policy self-test"
+    name: "Gate 0 · Policy and scanner self-test"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install conftest
+      - name: Install conftest, kyverno, gitleaks
         run: |
-          curl -sSL -o conftest.tar.gz \
-            https://github.com/open-policy-agent/conftest/releases/download/v0.56.0/conftest_0.56.0_Linux_x86_64.tar.gz
-          tar xzf conftest.tar.gz conftest && sudo mv conftest /usr/local/bin/
+          set -euo pipefail
+          curl -sSL https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz | tar xz conftest
+          curl -sSL https://github.com/kyverno/kyverno/releases/download/v${KYVERNO_VERSION}/kyverno-cli_v${KYVERNO_VERSION}_linux_x86_64.tar.gz | tar xz kyverno
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz | tar xz gitleaks
+          sudo mv conftest kyverno gitleaks /usr/local/bin/
 
-      - name: OPA policy unit tests
+      - name: OPA policy unit tests (plan JSON and Terraform source)
         env:
           POLICY_DIR: policy
         run: ./policy-tests/run-policy-tests.sh
 
-      - name: Install Kyverno CLI
-        run: |
-          curl -sSL -o kyverno.tar.gz \
-            https://github.com/kyverno/kyverno/releases/download/v1.13.4/kyverno-cli_v1.13.4_linux_x86_64.tar.gz
-          tar xzf kyverno.tar.gz kyverno && sudo mv kyverno /usr/local/bin/
-
       - name: Admission policy must still refuse a known-bad workload
         run: |
           set -uo pipefail
+          # kyverno exits 1 whenever any rule fails. GitHub runs steps with bash -e -o pipefail,
+          # so without "|| true" the step dies inside $( ) before printing anything (run #1).
           fails() {
-            kyverno apply k8s/policies/kyverno-baseline.yaml --resource "$1" 2>&1 \
+            { kyverno apply k8s/policies/kyverno-baseline.yaml --resource "$1" 2>&1 || true; } \
               | sed -n 's/.*fail: \([0-9]\+\).*/\1/p' | tail -1
           }
-
           bad=$(fails k8s/manifests/insecure-deployment.yaml)
           good=$(fails k8s/manifests/secure-deployment.yaml)
           echo "insecure manifest denials: ${bad:-none}"
           echo "secure   manifest denials: ${good:-none}"
-
-          # The known-bad manifest MUST be refused. If it is accepted, the
-          # policy has regressed and the cluster is unguarded.
           if [ -z "${bad:-}" ] || [ "${bad}" -eq 0 ]; then
-            echo "::error::Known-bad workload was ACCEPTED. Admission policy has regressed."
-            exit 1
+            echo "::error::Known-bad workload was ACCEPTED. Admission policy has regressed."; exit 1
+          fi
+          if [ "${good:-1}" -ne 0 ]; then
+            echo "::error::Conforming workload was REFUSED. Policy is over-broad."; exit 1
           fi
 
-          # And the conforming manifest MUST pass. A policy that denies
-          # everything is not a control, it is an outage.
-          if [ "${good:-1}" -ne 0 ]; then
-            echo "::error::Conforming workload was REFUSED. Policy is over-broad."
-            exit 1
+      - name: Secret scanner must still catch a freshly generated secret
+        run: |
+          set -uo pipefail
+          # A random token generated at run time: never committed, never a real credential.
+          d=$(mktemp -d)
+          # (not "tr </dev/urandom | head": under pipefail that dies of SIGPIPE, exit 141)
+          tok=$(python3 -c "import secrets,string; a=string.ascii_letters+string.digits; print(''.join(secrets.choice(a) for _ in range(40)))")
+          printf 'GRIDOPS_API_KEY = "%s"\n' "$tok" > "$d/canary.py"
+          if gitleaks detect --no-git --source "$d" --redact --no-banner -v; then
+            echo "::error::gitleaks did NOT detect the canary secret. Gate 1 cannot be trusted."; exit 1
+          fi
+          echo "canary detected: Gate 1 is evaluating"
+          # Documented limitation, printed every run so it is never forgotten:
+          printf 'AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"\n' > "$d/canary.py"
+          if gitleaks detect --no-git --source "$d" --no-banner >/dev/null 2>&1; then
+            echo "note: AWS's documentation example key is allowlisted by gitleaks defaults (not detected)."
           fi
 
   secret-scan:
-    name: "Gate 1 · Secret scanning"
+    name: "Gate 1 · Secret scanning (full history)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0          # gitleaks needs history to scan commits
-      - name: Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # No continue-on-error. A committed credential stops the build.
+          fetch-depth: 0          # the whole history, not just the latest commit
+      - name: gitleaks (CLI, every commit)
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz | tar xz gitleaks
+          ./gitleaks git . --config .gitleaks.toml --redact --no-banner -v
 
   iac-scan:
     name: "Gate 2 · Infrastructure as code"
@@ -91,42 +101,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Checkov
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: infra/
-          framework: terraform
-          soft_fail: false        # findings fail the job
-          output_format: cli
-      - name: Conftest (our own OPA policy)
         run: |
-          curl -sSL -o conftest.tar.gz \
-            https://github.com/open-policy-agent/conftest/releases/download/v0.56.0/conftest_0.56.0_Linux_x86_64.tar.gz
-          tar xzf conftest.tar.gz conftest && sudo mv conftest /usr/local/bin/
-          conftest test infra/ -p policy/ --all-namespaces || exit 1
+          pip install --quiet checkov
+          checkov --directory infra/ --framework terraform --compact --quiet
+      - name: Conftest (our own OPA policy, against Terraform source)
+        run: |
+          curl -sSL https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz | tar xz conftest
+          ./conftest test infra/ -p policy/ --all-namespaces --no-color
 
   sast:
     name: "Gate 3 · Static analysis"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/default
-            p/security-audit
-            p/secrets
+      - name: Semgrep (findings fail the job)
+        run: |
+          pip install --quiet semgrep
+          # --error makes findings exit non-zero. Without it semgrep reports and exits 0.
+          semgrep scan --config p/python --config p/secrets --error --metrics=off app/
 
-  dependency-and-image:
-    name: "Gate 4 · Dependencies and image"
+  dependency-scan:
+    name: "Gate 4 · Dependencies"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: fs
-          scan-ref: .
-          severity: CRITICAL,HIGH
-          exit-code: '1'          # HIGH or above fails the gate
-          ignore-unfixed: true
+      - name: Trivy (HIGH and CRITICAL fail the gate)
+        run: |
+          curl -sSL https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}/trivy_${TRIVY_VERSION#v}_Linux-64bit.tar.gz | tar xz trivy
+          ./trivy fs app/ --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 --no-progress
