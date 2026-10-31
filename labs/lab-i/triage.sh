@@ -23,6 +23,9 @@ q() { printf '\n$ %s\n' "$1"; az monitor log-analytics query -w "$W" --analytics
 if [ "${1:-}" = "--close" ]; then
   N="$2"; NOTE="$3"
   NAME=$(az rest --method get --url "$SI/incidents?api-version=$API" --query "value[?properties.incidentNumber==\`$N\`].name | [0]" -o tsv)
+  # comment first (it bumps the incident etag), then read the incident fresh and close it
+  json_comment=$(python3 -c 'import json,sys; print(json.dumps({"properties":{"message":sys.argv[1]}}))' "$NOTE")
+  [ -n "${SKIP_COMMENT:-}" ] || az rest --method put --url "$SI/incidents/$NAME/comments/$(cat /proc/sys/kernel/random/uuid)?api-version=$API" --body "$json_comment" -o none
   az rest --method get --url "$SI/incidents/$NAME?api-version=$API" > /tmp/inc.json
   python3 - "$NOTE" <<'PY'
 import json, sys
@@ -33,9 +36,7 @@ body = {"etag": inc.get("etag"), "properties": {
     "classification": "BenignPositive", "classificationReason": "SuspiciousButExpected",
     "classificationComment": sys.argv[1][:1000]}}
 json.dump(body, open("/tmp/inc-close.json", "w"))
-json.dump({"properties": {"message": sys.argv[1]}}, open("/tmp/inc-comment.json", "w"))
 PY
-  az rest --method put --url "$SI/incidents/$NAME/comments/$(cat /proc/sys/kernel/random/uuid)?api-version=$API" --body @/tmp/inc-comment.json -o none
   az rest --method put --url "$SI/incidents/$NAME?api-version=$API" --body @/tmp/inc-close.json -o none
   incidents
   exit 0
