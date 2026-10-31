@@ -1,0 +1,26 @@
+# LAB E mirrored in Harness CI (Harness Cloud, v1 pipeline YAML).
+# Not a copy of the GitHub workflow: a REGRESSION TEST OF THE GATES THEMSELVES.
+#   Stage 1 runs the gates on the known-bad commit 6a672e3 and passes only if every
+#           gate FAILS (5 of 5) — i.e. every planted finding is still caught.
+#   Stage 2 runs the same gates on main and passes only if every gate PASSES.
+# A green pipeline therefore means: the gates still bite, and the fixes still hold.
+pipeline:
+  stages:
+    - name: gates-must-refuse-known-bad-commit
+      steps:
+        - name: run-gates-on-6a672e3
+          run:
+            script: |
+              git clone --quiet https://github.com/SantRamLAnt/security-labs.git src && cd src
+              cp ci/run-gates.sh /tmp/run-gates.sh
+              git checkout --quiet 6a672e3
+              /tmp/run-gates.sh; n=$?
+              echo "expected 5 of 5 gates to fail on the known-bad commit; got $n"
+              [ "$n" -eq 5 ]
+    - name: gates-must-pass-remediated-main
+      steps:
+        - name: run-gates-on-main
+          run:
+            script: |
+              git clone --quiet https://github.com/SantRamLAnt/security-labs.git src && cd src
+              ./ci/run-gates.sh
