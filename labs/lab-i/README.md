@@ -225,3 +225,18 @@ the quiet ones — a configuration drifting, a policy disappearing, a service
 principal gaining a role at 3am. Loud attacks get noticed anyway. CIP-015 moving
 toward internal network security monitoring is the regulator saying the same
 thing: watch inside the perimeter, not just at it.
+
+---
+
+## RESULT — 31 Oct 2026 (what actually happened, not what was planned)
+
+- Deployed with `deploy.sh`: workspace `law-seclab`, daily cap 0.1 GB, Sentinel enabled, Azure Activity
+  connector only, three AzureActivity rules. Telemetry generated twice (17:22Z and 17:32Z).
+- **Fired:** `detect-privileged-role-assignment` raised incident 1 at 17:37Z. Triaged with `triage.sh`,
+  closed as **BenignPositive** with the determination written into the incident.
+- **Did not fire:** the key-listing and policy-deletion rules. Their events are in the subscription
+  activity log (`evidence/screens/lab-i-activitylog-source.png`) but had not reached the workspace 28
+  minutes later, while role-assignment events from the same runs had
+  (`evidence/screens/lab-i-workspace-ops.png`). Those two rules are therefore **untested, not passing**.
+- Not done: tuning a rule against a benign true positive; the MITRE coverage blade screenshot.
+- Torn down with `teardown.sh` at ~17:52Z: activity-log export removed, `rg-seclab-siem` deleted.
