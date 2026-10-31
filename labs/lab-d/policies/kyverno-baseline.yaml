@@ -1,0 +1,193 @@
+# LAB D — Kyverno admission policies.
+# Each rule names the control it enforces, so a rejected deployment tells the
+# engineer which baseline they broke rather than only that something is wrong.
+# Frameworks: CIS Kubernetes Benchmark s5 · NIST SP 800-53 Rev 5 CM-6, CM-7,
+# SC-39 · NERC CIP-007-6 R5 · NERC CIP-010-4 R1 · NSA/CISA Kubernetes Hardening.
+#
+# validationFailureAction: Enforce blocks. Switch to Audit first in any cluster
+# that already has workloads in it — the same rule as Azure Policy in Lab B.
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restricted-pod-baseline
+  annotations:
+    policies.kyverno.io/title: Restricted pod baseline
+    policies.kyverno.io/category: Pod Security
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: no-privileged-containers
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          [CIS Kubernetes 5.2.1] [NIST 800-53 CM-7 Least Functionality]
+          [NERC CIP-007-6 R5] privileged: true is effectively root on the node.
+          Set securityContext.privileged to false.
+        pattern:
+          spec:
+            =(securityContext):
+              =(privileged): "false"
+            containers:
+              - =(securityContext):
+                  =(privileged): "false"
+
+    - name: no-privilege-escalation
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          [CIS Kubernetes 5.2.5] [NIST 800-53 AC-6 Least Privilege]
+          allowPrivilegeEscalation must be false.
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  allowPrivilegeEscalation: "false"
+
+    - name: run-as-non-root
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          [CIS Kubernetes 5.2.6] [NIST 800-53 SC-39 Process Isolation]
+          Containers must run as a non-root user. Set runAsNonRoot: true.
+        anyPattern:
+          - spec:
+              securityContext:
+                runAsNonRoot: "true"
+          - spec:
+              containers:
+                - securityContext:
+                    runAsNonRoot: "true"
+
+    - name: no-host-namespaces
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          [CIS Kubernetes 5.2.2-5.2.4] [NIST 800-53 SC-39] [NERC CIP-005-7 R1]
+          hostNetwork, hostPID and hostIPC break container isolation and expose
+          the node's namespaces to the workload.
+        pattern:
+          spec:
+            =(hostNetwork): "false"
+            =(hostPID): "false"
+            =(hostIPC): "false"
+
+    - name: no-hostpath-volumes
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          [CIS Kubernetes 5.2.12] [NIST 800-53 AC-6] hostPath volumes mount the
+          node filesystem into the container. Use emptyDir, a ConfigMap, or a
+          PersistentVolumeClaim.
+        foreach:
+          - list: "request.object.spec.volumes[]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.keys(@) }}"
+                    operator: AnyIn
+                    value: ["hostPath"]
+
+    - name: drop-all-capabilities
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          [CIS Kubernetes 5.2.8-5.2.9] [NIST 800-53 CM-7 Least Functionality]
+          Containers must drop ALL capabilities and add back only what is
+          required, with justification.
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  capabilities:
+                    drop: ["ALL"]
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: image-provenance
+  annotations:
+    policies.kyverno.io/title: Image provenance and reproducibility
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: disallow-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          [CIS Kubernetes 5.5] [NIST 800-53 CM-2 Baseline Configuration]
+          [NERC CIP-010-4 R1] An unpinned or :latest tag means the running image
+          is not necessarily the image that was scanned. Pin by digest, or at
+          minimum by an explicit version tag.
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
+    - name: require-explicit-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          [NIST 800-53 CM-2] Image must carry an explicit tag or digest.
+        pattern:
+          spec:
+            containers:
+              - image: "*:*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: resource-limits-required
+  annotations:
+    policies.kyverno.io/title: Resource limits required
+    policies.kyverno.io/category: Availability
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-limits
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          [NIST 800-53 SC-6 Resource Availability] A container without limits can
+          starve every other workload on the node. Availability is a security
+          property, not an operations one.
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  limits:
+                    memory: "?*"
+                    cpu: "?*"

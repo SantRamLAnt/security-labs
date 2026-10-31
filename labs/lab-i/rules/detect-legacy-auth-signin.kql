@@ -1,0 +1,96 @@
+// =====================================================================
+// RULE:      Legacy authentication sign-in
+// SEVERITY:  Medium (High if successful against a privileged account)
+// ATT&CK:    Initial Access — T1078.004 (Valid Accounts: Cloud Accounts)
+//            Credential Access — T1110 (Brute Force), for the volume variant
+// CONTROLS:  NIST 800-53 IA-2(1), AC-7, AU-6 · NERC CIP-005-7 R2 · CIP-007-6 R4
+// SOURCE:    SigninLogs  (Entra ID connector)
+// SCHEDULE:  run every 1h, look back 1h
+// ENTITIES:  Account = UserPrincipalName · IP = IPAddress
+//
+// ===== NOT ENABLED IN THIS LAB, AND HERE IS WHY =====
+// This rule needs the Entra ID sign-in logs connector, which is one of the
+// high-volume ones and therefore one of the expensive ones. The lab runs on
+// the Azure Activity connector only, deliberately, to keep ingestion near zero.
+//
+// The rule is included complete so the detection set is coherent, and marked
+// as not-run so nothing here is overclaimed. In an interview: "I wrote it, I
+// didn't run it, because enabling that connector in a personal subscription
+// costs more than the lab is worth — here is the query and here is what it
+// would catch." That answer is stronger than quietly presenting five rules as
+// though all five were live.
+//
+// WHY THIS RULE MATTERS
+// Legacy authentication protocols — POP, IMAP, SMTP AUTH, older Exchange and
+// ActiveSync clients — cannot perform multi-factor authentication. They do not
+// bypass MFA by exploit; they predate it. So every legacy-auth path is a
+// username-and-password door into a tenant that otherwise requires MFA, and it
+// is where password spraying goes first.
+//
+// The Conditional Access design in Lab C blocks legacy authentication. This is
+// the detection for the case where that policy is missing, excluded, or the
+// account is in a break-glass exclusion group.
+// =====================================================================
+
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ClientAppUsed in (
+      "Exchange ActiveSync",
+      "IMAP4",
+      "POP3",
+      "SMTP",
+      "MAPI Over HTTP",
+      "Exchange Web Services",
+      "Exchange Online PowerShell",
+      "Authenticated SMTP",
+      "Other clients"
+  )
+| extend Outcome = iff(ResultType == "0", "Success", "Failure")
+| project
+    TimeGenerated,
+    UserPrincipalName,
+    ClientAppUsed,
+    Outcome,
+    ResultType,
+    ResultDescription,
+    IPAddress,
+    Location = tostring(LocationDetails.countryOrRegion),
+    AppDisplayName
+| order by TimeGenerated desc
+
+// ---------------------------------------------------------------------
+// THE VARIANT THAT ACTUALLY CATCHES AN ATTACK
+// Password spraying: many accounts, few attempts each, one source.
+// Low per-account failure counts are exactly how a spray evades lockout
+// thresholds, so counting distinct ACCOUNTS per IP beats counting failures
+// per account.
+// ---------------------------------------------------------------------
+// SigninLogs
+// | where TimeGenerated > ago(1h)
+// | where ClientAppUsed in ("IMAP4","POP3","SMTP","Other clients","Authenticated SMTP")
+// | where ResultType != "0"
+// | summarize
+//     DistinctAccounts = dcount(UserPrincipalName),
+//     Attempts         = count(),
+//     Accounts         = make_set(UserPrincipalName, 25),
+//     FirstSeen        = min(TimeGenerated),
+//     LastSeen         = max(TimeGenerated)
+//   by IPAddress
+// | where DistinctAccounts >= 5
+// | extend AttemptsPerAccount = round(todouble(Attempts) / DistinctAccounts, 1)
+// | order by DistinctAccounts desc
+//
+// AttemptsPerAccount near 1 is the spray signature. A high value is a single
+// compromised or misconfigured client, which is a different incident with a
+// different response.
+//
+// ---------------------------------------------------------------------
+// IF THIS FIRES WITH Outcome == "Success"
+// ---------------------------------------------------------------------
+//   1. Treat the account as compromised. A successful legacy-auth sign-in in a
+//      tenant that requires MFA means MFA was not applied to that session.
+//   2. Revoke sessions, reset credentials, review mailbox forwarding rules —
+//      a forwarding rule is the usual persistence step after mailbox access and
+//      it survives the password reset.
+//   3. Then fix the cause: block legacy authentication tenant-wide and review
+//      why an exclusion existed.

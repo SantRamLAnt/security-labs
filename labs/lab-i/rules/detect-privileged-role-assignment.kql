@@ -1,0 +1,75 @@
+// =====================================================================
+// RULE:      Privileged role assigned at subscription or management group scope
+// SEVERITY:  High
+// ATT&CK:    Privilege Escalation / Persistence — T1098.003
+//            (Account Manipulation: Additional Cloud Roles)
+// CONTROLS:  NIST 800-53 AC-2, AC-6, AU-6 · NERC CIP-004-7 R4, R5 · CIP-007-6 R4
+// SOURCE:    AzureActivity
+// SCHEDULE:  run every 15m, look back 1h
+// ENTITIES:  Account = Caller · IP = CallerIpAddress · AzureResource = _ResourceId
+//
+// WHY THIS RULE EXISTS
+// Lab C narrows privilege by scope. A role assignment at subscription scope
+// undoes that in one call, and unlike a credential it survives password resets,
+// MFA enrolment and session revocation — which makes it the preferred
+// persistence mechanism in cloud, not merely an escalation one.
+//
+// The discriminator that matters is SCOPE, not role name. Contributor on one
+// resource group is routine. Reader at subscription scope is worth seeing.
+// Owner at subscription scope is an event.
+// =====================================================================
+
+AzureActivity
+| where TimeGenerated > ago(1h)
+| where OperationNameValue has "MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/WRITE"
+| where ActivityStatusValue in ("Success", "Succeeded", "Accepted")
+// scope depth: /subscriptions/<id> is 3 segments; anything deeper is narrower
+| extend ScopeDepth = array_length(split(_ResourceId, "/"))
+| extend AssignmentScope = iff(_ResourceId has "/resourceGroups/", "ResourceGroup", "Subscription or higher")
+| where AssignmentScope == "Subscription or higher"
+| project
+    TimeGenerated,
+    Caller,
+    CallerIpAddress,
+    AssignmentScope,
+    _ResourceId,
+    OperationNameValue,
+    ActivityStatusValue
+| order by TimeGenerated desc
+
+// ---------------------------------------------------------------------
+// A LIMITATION TO STATE OUT LOUD
+// ---------------------------------------------------------------------
+// AzureActivity records that a role assignment was written, but the ROLE and
+// the PRINCIPAL live in the request body, which this table does not reliably
+// expose. Two honest options:
+//
+//   (a) Accept it: alert on the event, resolve the detail during triage with
+//           az role assignment list --all --query "[?scope=='<scope>']"
+//   (b) Enrich at source: send Entra ID audit logs (AuditLogs table) to the
+//       workspace, where "Add member to role" carries both. That connector
+//       costs ingestion — a real trade-off, and naming it is better than
+//       writing a rule that silently cannot do what it claims.
+//
+// This lab takes option (a) and documents it. A detection with a stated blind
+// spot is worth more than one with an unstated one.
+//
+// ---------------------------------------------------------------------
+// EXPECTED FALSE POSITIVES
+// ---------------------------------------------------------------------
+// 1. Your own Lab C work. Benign true positive.
+// 2. Landing-zone deployments assigning roles to managed identities. Filter on
+//    the deployment principal, not on the operation.
+//
+// ---------------------------------------------------------------------
+// COMPANION HUNT — standing privilege, as a point-in-time review
+// Run monthly. This is the CIP-004-7 R4 artifact, not a detection.
+// ---------------------------------------------------------------------
+// AzureActivity
+// | where TimeGenerated > ago(30d)
+// | where OperationNameValue has "MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/"
+// | summarize Assignments = count(),
+//             Operations  = make_set(OperationNameValue),
+//             LastSeen    = max(TimeGenerated)
+//           by Caller
+// | order by Assignments desc

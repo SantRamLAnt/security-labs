@@ -1,0 +1,71 @@
+// =====================================================================
+// RULE:      Cognitive Services / Azure OpenAI account key listed
+// SEVERITY:  Medium
+// ATT&CK:    Credential Access — T1552.005 (credentials from cloud services)
+// CONTROLS:  NIST 800-53 AU-6, SI-4 · NERC CIP-007-6 R4 · CIP-004-7 R4
+// SOURCE:    AzureActivity  (Azure Activity connector — the free one)
+// SCHEDULE:  run every 15m, look back 1h
+// ENTITIES:  Account = Caller · IP = CallerIpAddress · AzureResource = _ResourceId
+//
+// WHY THIS RULE EXISTS
+// The custom RBAC role in Lab C deliberately omits listKeys. The key is a
+// bearer credential to the model endpoint: anyone holding it can call the model
+// as the application, from anywhere, with no further authentication and no
+// user attribution. So key retrieval is the single highest-signal action
+// against this resource, and it is rare enough to alert on.
+//
+// This is the detection that corresponds to the control in Lab C. If the role
+// boundary is ever widened, or an Owner simply bypasses it, this fires.
+// =====================================================================
+
+AzureActivity
+| where TimeGenerated > ago(1h)
+| where OperationNameValue has "MICROSOFT.COGNITIVESERVICES/ACCOUNTS/LISTKEYS/ACTION"
+| where ActivityStatusValue in ("Success", "Succeeded", "Accepted")
+| extend ResourceName = tostring(split(_ResourceId, "/")[-1])
+| project
+    TimeGenerated,
+    Caller,
+    CallerIpAddress,
+    ResourceName,
+    ResourceGroup,
+    OperationNameValue,
+    ActivityStatusValue,
+    _ResourceId
+| order by TimeGenerated desc
+
+// ---------------------------------------------------------------------
+// EXPECTED FALSE POSITIVES
+// ---------------------------------------------------------------------
+// 1. You, retrieving the key to run the Lab F suite. This is a BENIGN TRUE
+//    POSITIVE, not a false positive — the activity happened and the rule is
+//    correct. Use the term precisely; it signals real SOC exposure.
+// 2. A CI/CD pipeline or deployment script fetching the key at build time.
+//    That is an architecture finding, not alert noise: the pipeline should use
+//    a managed identity and Entra token, not a static key.
+//
+// TUNING — pick one, and write down why
+//   (a) Narrow: exclude your own principal only when the call is from a known
+//       IP and inside working hours. Keeps coverage of the stolen-session case.
+//          | where not(Caller == "<your-upn>" and CallerIpAddress == "<your-ip>")
+//   (b) Demote: keep the rule at Low and use it as corroboration alongside
+//       other signals. Defensible when the action is genuinely routine.
+//   (c) Leave it. Defensible here, because key listing should be rare.
+//
+// DO NOT simply exclude the account that generates the noise. That account is
+// exactly the one an attacker would use.
+//
+// ---------------------------------------------------------------------
+// TRIAGE PIVOT — everything that principal did around the alert
+// ---------------------------------------------------------------------
+// AzureActivity
+// | where TimeGenerated between (datetime(<alert-time>) - 2h .. datetime(<alert-time>) + 2h)
+// | where Caller == "<caller from the alert>"
+// | project TimeGenerated, OperationNameValue, ActivityStatusValue, _ResourceId, CallerIpAddress
+// | order by TimeGenerated asc
+//
+// IF THIS WERE MALICIOUS — response order
+//   1. Regenerate BOTH keys on the account (rotating one leaves the other live).
+//   2. Revoke the principal's sessions and review its role assignments.
+//   3. Check model usage and cost for the period after the listing.
+//   4. Preserve the activity log for the window before anything is torn down.

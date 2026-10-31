@@ -1,0 +1,5 @@
+# Lab E - gitleaks configuration
+# Extends the default ruleset. We do NOT allowlist app/config.py:
+# the planted key is supposed to be caught.
+[extend]
+useDefault = true

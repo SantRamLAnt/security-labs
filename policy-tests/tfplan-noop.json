@@ -1,0 +1,31 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.9.8",
+  "resource_changes": [
+    {
+      "address": "azurerm_storage_account.existing",
+      "mode": "managed",
+      "type": "azurerm_storage_account",
+      "name": "labasecold01",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "no-op"
+        ],
+        "before": null,
+        "after": {
+          "name": "labasecold01",
+          "account_tier": "Standard",
+          "account_replication_type": "LRS",
+          "location": "eastus",
+          "allow_nested_items_to_be_public": true,
+          "min_tls_version": "TLS1_0",
+          "https_traffic_only_enabled": false,
+          "tags": {
+            "purpose": "security-lab"
+          }
+        }
+      }
+    }
+  ]
+}

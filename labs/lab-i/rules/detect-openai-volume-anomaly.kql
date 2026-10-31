@@ -1,0 +1,88 @@
+// =====================================================================
+// RULE:      Anomalous Azure OpenAI request volume
+// SEVERITY:  Medium
+// ATT&CK:    Impact — T1496 (Resource Hijacking)
+// OWASP:     LLM10 Unbounded Consumption
+// CONTROLS:  NIST 800-53 SI-4, SC-6 · NIST AI RMF MANAGE 4.1 (post-deployment
+//            monitoring) · NERC CIP-007-6 R4
+// SOURCE:    AzureDiagnostics  (requires diagnostic settings on the account)
+// SCHEDULE:  run every 1h, look back 24h
+// ENTITIES:  AzureResource = Resource · IP = CallerIPAddress (where present)
+//
+// PREREQUISITE — AND ITS COST
+// This rule needs diagnostic settings enabled on the Cognitive Services account
+// and pointed at the workspace. That adds ingestion, which is the one thing
+// Sentinel bills for. For a lab: enable it, capture the evidence, disable it.
+//
+//   az monitor diagnostic-settings create \
+//     --name seclab-oai-diag \
+//     --resource "/subscriptions/<sub>/resourceGroups/rg-seclab-ai/providers/Microsoft.CognitiveServices/accounts/oai-seclab-lsr01" \
+//     --workspace "/subscriptions/<sub>/resourceGroups/rg-seclab-siem/providers/Microsoft.OperationalInsights/workspaces/law-seclab" \
+//     --logs '[{"category":"RequestResponse","enabled":true}]'
+//
+// WHY THIS RULE EXISTS
+// Lab G rates T8 Unbounded Consumption as low residual risk precisely BECAUSE
+// cost controls and quotas are effective. This rule is the detective half of
+// that claim. The threat is denial of wallet: the endpoint is a public URL
+// authenticated by a bearer key, so a leaked key becomes someone else's free
+// inference capacity, and the first symptom is a bill.
+//
+// Note the relationship to detect-cognitive-key-listed.kql: key listed, then
+// volume spike, is a two-event story that is far stronger than either alone.
+// =====================================================================
+
+let lookback   = 24h;
+let bin_size   = 1h;
+let sensitivity = 1.5;   // lower = more sensitive
+AzureDiagnostics
+| where TimeGenerated > ago(lookback)
+| where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
+| summarize Requests = count() by bin(TimeGenerated, bin_size), Resource
+| order by TimeGenerated asc
+| summarize
+    Timestamps = make_list(TimeGenerated),
+    Counts     = make_list(Requests)
+    by Resource
+| extend (Anomalies, Score, Baseline) =
+    series_decompose_anomalies(Counts, sensitivity, -1, 'linefit')
+| mv-expand Timestamps to typeof(datetime),
+            Counts     to typeof(long),
+            Anomalies  to typeof(int),
+            Score      to typeof(double),
+            Baseline   to typeof(long)
+| where Anomalies > 0
+| project
+    TimeGenerated = Timestamps,
+    Resource,
+    Requests      = Counts,
+    Expected      = Baseline,
+    AnomalyScore  = round(Score, 2)
+| order by TimeGenerated desc
+
+// ---------------------------------------------------------------------
+// A HONEST CAVEAT ABOUT ANOMALY DETECTION ON A LAB
+// ---------------------------------------------------------------------
+// series_decompose_anomalies needs a baseline, and a lab that sees traffic
+// twice a week has no baseline worth the name. On this data the rule will
+// mostly fire on YOU running the Lab F suite — which is useful for proving the
+// rule works, and useless as a detection.
+//
+// The correct framing: this rule is real in a system with real traffic, and in
+// a lab it is a demonstration of the technique. Say that rather than presenting
+// a lab anomaly score as a finding. Overclaiming on a detection is the fastest
+// way to lose a technical interviewer.
+//
+// ---------------------------------------------------------------------
+// THE SIMPLER RULE THAT IS OFTEN BETTER
+// ---------------------------------------------------------------------
+// A fixed threshold beats anomaly detection whenever you can state the number,
+// because it is explainable at 3am and it has no warm-up period:
+//
+// AzureDiagnostics
+// | where TimeGenerated > ago(1h)
+// | where ResourceProvider == "MICROSOFT.COGNITIVESERVICES"
+// | summarize Requests = count() by Resource, bin(TimeGenerated, 5m)
+// | where Requests > 200     // set from YOUR observed normal, not from a guess
+//
+// Preferring the simple rule where it works is a judgement call worth making
+// visible. The sophisticated rule is not automatically the better control.

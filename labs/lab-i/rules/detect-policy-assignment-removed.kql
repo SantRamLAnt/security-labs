@@ -1,0 +1,79 @@
+// =====================================================================
+// RULE:      Azure Policy assignment deleted, or exemption created
+// SEVERITY:  High
+// ATT&CK:    Defense Evasion — T1562.001 (Impair Defenses: Disable or Modify Tools)
+// CONTROLS:  NIST 800-53 AU-6, SI-4, CM-3 · NERC CIP-010-4 R1 · CIP-007-6 R4
+// SOURCE:    AzureActivity
+// SCHEDULE:  run every 15m, look back 1h
+// ENTITIES:  Account = Caller · IP = CallerIpAddress · AzureResource = _ResourceId
+//
+// WHY THIS RULE EXISTS
+// Lab B assigns policy. Policy is only a control while it is assigned, and
+// removing it is a single API call that produces no other visible effect. An
+// attacker who wants to deploy a non-conforming resource does not fight the
+// policy — they delete it first, deploy second, and in an untuned environment
+// nobody notices until the next compliance review.
+//
+// Policy exemptions matter as much as deletions and are quieter: the assignment
+// stays visible in the portal while no longer applying to the exempted scope.
+// Both are covered below.
+// =====================================================================
+
+AzureActivity
+| where TimeGenerated > ago(1h)
+| where OperationNameValue has_any (
+      "MICROSOFT.AUTHORIZATION/POLICYASSIGNMENTS/DELETE",
+      "MICROSOFT.AUTHORIZATION/POLICYEXEMPTIONS/WRITE",
+      "MICROSOFT.AUTHORIZATION/POLICYDEFINITIONS/DELETE",
+      "MICROSOFT.AUTHORIZATION/POLICYSETDEFINITIONS/DELETE"
+  )
+| where ActivityStatusValue in ("Success", "Succeeded", "Accepted")
+| extend Action = case(
+      OperationNameValue has "POLICYASSIGNMENTS/DELETE",   "Policy assignment deleted",
+      OperationNameValue has "POLICYEXEMPTIONS/WRITE",     "Policy exemption created or changed",
+      OperationNameValue has "POLICYDEFINITIONS/DELETE",   "Policy definition deleted",
+      "Policy set definition deleted")
+| project
+    TimeGenerated,
+    Action,
+    Caller,
+    CallerIpAddress,
+    _ResourceId,
+    OperationNameValue,
+    ActivityStatusValue
+| order by TimeGenerated desc
+
+// ---------------------------------------------------------------------
+// EXPECTED FALSE POSITIVES
+// ---------------------------------------------------------------------
+// 1. Your own Lab B teardown. Benign true positive.
+// 2. Landing-zone automation reconciling assignments. If a pipeline routinely
+//    deletes and recreates assignments, filter on the automation principal
+//    only — and then build a second rule that fires when the SAME assignment
+//    is deleted and NOT recreated within the expected window. That second rule
+//    is the one with real value; a deletion followed by no recreation is the
+//    actual anomaly.
+//
+// TUNING NOTE
+// Do not lower this rule's severity to reduce noise. Defense-evasion signals
+// are the ones you most want loud, because by definition they precede the
+// activity they were meant to prevent.
+//
+// ---------------------------------------------------------------------
+// THE QUERY THAT MAKES THIS ALERT ACTIONABLE
+// What did the same caller deploy in the two hours AFTER the policy went away?
+// ---------------------------------------------------------------------
+// let evasion = AzureActivity
+//   | where OperationNameValue has "MICROSOFT.AUTHORIZATION/POLICYASSIGNMENTS/DELETE"
+//   | where ActivityStatusValue in ("Success","Succeeded","Accepted")
+//   | project EvasionTime = TimeGenerated, Caller;
+// AzureActivity
+// | join kind=inner evasion on Caller
+// | where TimeGenerated between (EvasionTime .. EvasionTime + 2h)
+// | where OperationNameValue has "/WRITE" and OperationNameValue !has "POLICY"
+// | project TimeGenerated, EvasionTime, Caller, OperationNameValue, _ResourceId
+// | order by TimeGenerated asc
+//
+// That join — control removed, then resource created — is the sequence worth
+// alerting on in a real environment, and it is a better interview answer than
+// either event alone.

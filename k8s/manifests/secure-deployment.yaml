@@ -1,0 +1,66 @@
+# LAB D — the same application, conforming to the restricted baseline.
+# Every change here maps to a rule in policies/kyverno-baseline.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outage-portal
+  namespace: workloads
+  labels:
+    app: outage-portal
+    lab: lab-d
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: outage-portal
+  template:
+    metadata:
+      labels:
+        app: outage-portal
+    spec:
+      # no host namespaces
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          # pinned by digest: what you scanned is what runs
+          # replace with the digest you actually scanned:
+          #   trivy image nginx:1.27.3-alpine
+          #   docker inspect --format='{{index .RepoDigests 0}}' nginx:1.27.3-alpine
+          image: nginx:1.27.3-alpine
+          ports:
+            - containerPort: 8080
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          volumeMounts:
+            # read-only root filesystem means writable paths must be explicit
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
+      volumes:
+        - name: cache
+          emptyDir: {}
+        - name: run
+          emptyDir: {}

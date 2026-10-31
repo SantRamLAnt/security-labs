@@ -1,0 +1,132 @@
+# LAB E — DevSecOps security gates
+# Five BLOCKING gates. Advisory scanning gets ignored; a failed build does not.
+# Control mapping: NERC CIP-010-4 R1, CIP-013-2 R1, NIST SA-11, SA-15, CM-3, CA-2
+#
+# Gate 0 is the one nobody builds: it tests the POLICIES. A policy gate that is
+# wrong fails open silently while everyone believes a control is in place, and
+# "zero violations" and "zero rules evaluated" look identical in a dashboard.
+# If the policies cannot prove they still refuse a known-bad input, no later
+# gate's green tick means anything.
+
+name: Security Gates
+
+on:
+  push:
+    branches: [ main, "lab/**" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+
+  policy-self-test:
+    name: "Gate 0 · Policy self-test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install conftest
+        run: |
+          curl -sSL -o conftest.tar.gz \
+            https://github.com/open-policy-agent/conftest/releases/download/v0.56.0/conftest_0.56.0_Linux_x86_64.tar.gz
+          tar xzf conftest.tar.gz conftest && sudo mv conftest /usr/local/bin/
+
+      - name: OPA policy unit tests
+        env:
+          POLICY_DIR: policy
+        run: ./policy-tests/run-policy-tests.sh
+
+      - name: Install Kyverno CLI
+        run: |
+          curl -sSL -o kyverno.tar.gz \
+            https://github.com/kyverno/kyverno/releases/download/v1.13.4/kyverno-cli_v1.13.4_linux_x86_64.tar.gz
+          tar xzf kyverno.tar.gz kyverno && sudo mv kyverno /usr/local/bin/
+
+      - name: Admission policy must still refuse a known-bad workload
+        run: |
+          set -uo pipefail
+          fails() {
+            kyverno apply k8s/policies/kyverno-baseline.yaml --resource "$1" 2>&1 \
+              | sed -n 's/.*fail: \([0-9]\+\).*/\1/p' | tail -1
+          }
+
+          bad=$(fails k8s/manifests/insecure-deployment.yaml)
+          good=$(fails k8s/manifests/secure-deployment.yaml)
+          echo "insecure manifest denials: ${bad:-none}"
+          echo "secure   manifest denials: ${good:-none}"
+
+          # The known-bad manifest MUST be refused. If it is accepted, the
+          # policy has regressed and the cluster is unguarded.
+          if [ -z "${bad:-}" ] || [ "${bad}" -eq 0 ]; then
+            echo "::error::Known-bad workload was ACCEPTED. Admission policy has regressed."
+            exit 1
+          fi
+
+          # And the conforming manifest MUST pass. A policy that denies
+          # everything is not a control, it is an outage.
+          if [ "${good:-1}" -ne 0 ]; then
+            echo "::error::Conforming workload was REFUSED. Policy is over-broad."
+            exit 1
+          fi
+
+  secret-scan:
+    name: "Gate 1 · Secret scanning"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # gitleaks needs history to scan commits
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # No continue-on-error. A committed credential stops the build.
+
+  iac-scan:
+    name: "Gate 2 · Infrastructure as code"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infra/
+          framework: terraform
+          soft_fail: false        # findings fail the job
+          output_format: cli
+      - name: Conftest (our own OPA policy)
+        run: |
+          curl -sSL -o conftest.tar.gz \
+            https://github.com/open-policy-agent/conftest/releases/download/v0.56.0/conftest_0.56.0_Linux_x86_64.tar.gz
+          tar xzf conftest.tar.gz conftest && sudo mv conftest /usr/local/bin/
+          conftest test infra/ -p policy/ --all-namespaces || exit 1
+
+  sast:
+    name: "Gate 3 · Static analysis"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/default
+            p/security-audit
+            p/secrets
+
+  dependency-and-image:
+    name: "Gate 4 · Dependencies and image"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'          # HIGH or above fails the gate
+          ignore-unfixed: true

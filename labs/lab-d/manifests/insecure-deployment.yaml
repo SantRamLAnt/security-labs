@@ -1,0 +1,49 @@
+# LAB D — deliberately insecure workload.
+# Six real misconfigurations. Apply this only to the local kind cluster.
+# Never apply anything from this repository to a cluster you do not own.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outage-portal
+  namespace: workloads
+  labels:
+    app: outage-portal
+    lab: lab-d
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: outage-portal
+  template:
+    metadata:
+      labels:
+        app: outage-portal
+    spec:
+      # 4 — container shares the node's network namespace
+      hostNetwork: true
+      hostPID: true
+      containers:
+        - name: web
+          # 6 — unpinned tag: what runs today is not what you scanned
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          securityContext:
+            # 1 — effectively root on the node
+            privileged: true
+            # 2 — runs as root inside the container
+            runAsUser: 0
+            # 3 — setuid path to higher privilege
+            allowPrivilegeEscalation: true
+            readOnlyRootFilesystem: false
+            capabilities:
+              add: ["SYS_ADMIN", "NET_ADMIN"]
+          volumeMounts:
+            - name: host-root
+              mountPath: /host
+      volumes:
+        # 5 — the entire node filesystem, writable
+        - name: host-root
+          hostPath:
+            path: /
+            type: Directory

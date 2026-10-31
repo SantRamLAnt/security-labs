@@ -1,0 +1,9 @@
+{
+  "if": {
+    "field": "tags['teardown']",
+    "exists": "false"
+  },
+  "then": {
+    "effect": "audit"
+  }
+}
