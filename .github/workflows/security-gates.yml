@@ -43,7 +43,12 @@ jobs:
       - name: OPA policy unit tests (plan JSON and Terraform source)
         env:
           POLICY_DIR: policy
-        run: ./policy-tests/run-policy-tests.sh
+        run: |
+          set +e
+          ./policy-tests/run-policy-tests.sh 2>&1 | tee gate.out
+          rc=${PIPESTATUS[0]}
+          { echo '### Gate 0 OPA policy unit tests (exit '"$rc"')'; echo '```'; sed 's/\x1b\[[0-9;]*m//g' gate.out | tail -n 80; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
 
       - name: Admission policy must still refuse a known-bad workload
         run: |
@@ -58,6 +63,7 @@ jobs:
           good=$(fails k8s/manifests/secure-deployment.yaml)
           echo "insecure manifest denials: ${bad:-none}"
           echo "secure   manifest denials: ${good:-none}"
+          printf '### Gate 0 admission policy self-test\n```\ninsecure manifest denials: %s\nsecure   manifest denials: %s\n```\n' "${bad:-none}" "${good:-none}" >> "$GITHUB_STEP_SUMMARY"
           if [ -z "${bad:-}" ] || [ "${bad}" -eq 0 ]; then
             echo "::error::Known-bad workload was ACCEPTED. Admission policy has regressed."; exit 1
           fi
@@ -77,10 +83,12 @@ jobs:
             echo "::error::gitleaks did NOT detect the canary secret. Gate 1 cannot be trusted."; exit 1
           fi
           echo "canary detected: Gate 1 is evaluating"
+          printf '### Gate 0 secret-scanner canary\n```\nrun-time generated key: detected by gitleaks (Gate 1 is evaluating)\n```\n' >> "$GITHUB_STEP_SUMMARY"
           # Documented limitation, printed every run so it is never forgotten:
           printf 'AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"\n' > "$d/canary.py"
           if gitleaks detect --no-git --source "$d" --no-banner >/dev/null 2>&1; then
             echo "note: AWS's documentation example key is allowlisted by gitleaks defaults (not detected)."
+            printf '```\nAWS documentation example key AKIAIOSFODNN7EXAMPLE: NOT detected (allowlisted by gitleaks defaults)\n```\n' >> "$GITHUB_STEP_SUMMARY"
           fi
 
   secret-scan:
@@ -93,7 +101,11 @@ jobs:
       - name: gitleaks (CLI, every commit)
         run: |
           curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz | tar xz gitleaks
-          ./gitleaks git . --config .gitleaks.toml --redact --no-banner -v
+          set +e
+          ./gitleaks git . --config .gitleaks.toml --redact --no-banner -v 2>&1 | tee gate.out
+          rc=${PIPESTATUS[0]}
+          { echo '### Gate 1 gitleaks, full history (exit '"$rc"')'; echo '```'; sed 's/\x1b\[[0-9;]*m//g' gate.out | tail -n 80; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
 
   iac-scan:
     name: "Gate 2 · Infrastructure as code"
@@ -103,11 +115,20 @@ jobs:
       - name: Checkov
         run: |
           pip install --quiet checkov
-          checkov --directory infra/ --framework terraform --compact --quiet
+          set +e
+          checkov --directory infra/ --framework terraform --compact --quiet 2>&1 | tee gate.out
+          rc=${PIPESTATUS[0]}
+          { echo '### Gate 2 Checkov (exit '"$rc"')'; echo '```'; sed 's/\x1b\[[0-9;]*m//g' gate.out | tail -n 80; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
       - name: Conftest (our own OPA policy, against Terraform source)
+        if: always()   # run even when Checkov fails, so both results are visible
         run: |
           curl -sSL https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz | tar xz conftest
-          ./conftest test infra/ -p policy/ --all-namespaces --no-color
+          set +e
+          ./conftest test infra/ -p policy/ --all-namespaces --no-color 2>&1 | tee gate.out
+          rc=${PIPESTATUS[0]}
+          { echo '### Gate 2 Conftest, own OPA policy (exit '"$rc"')'; echo '```'; sed 's/\x1b\[[0-9;]*m//g' gate.out | tail -n 80; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
 
   sast:
     name: "Gate 3 · Static analysis"
@@ -118,7 +139,11 @@ jobs:
         run: |
           pip install --quiet semgrep
           # --error makes findings exit non-zero. Without it semgrep reports and exits 0.
-          semgrep scan --config p/python --config p/secrets --error --metrics=off app/
+          set +e
+          semgrep scan --config p/python --config p/secrets --error --metrics=off app/ 2>&1 | tee gate.out
+          rc=${PIPESTATUS[0]}
+          { echo '### Gate 3 Semgrep (exit '"$rc"')'; echo '```'; sed 's/\x1b\[[0-9;]*m//g' gate.out | tail -n 80; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
 
   dependency-scan:
     name: "Gate 4 · Dependencies"
@@ -128,4 +153,8 @@ jobs:
       - name: Trivy (HIGH and CRITICAL fail the gate)
         run: |
           curl -sSL https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}/trivy_${TRIVY_VERSION#v}_Linux-64bit.tar.gz | tar xz trivy
-          ./trivy fs app/ --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 --no-progress
+          set +e
+          ./trivy fs app/ --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 --no-progress 2>&1 | tee gate.out
+          rc=${PIPESTATUS[0]}
+          { echo '### Gate 4 Trivy (exit '"$rc"')'; echo '```'; sed 's/\x1b\[[0-9;]*m//g' gate.out | tail -n 80; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
