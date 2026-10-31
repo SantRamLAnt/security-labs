@@ -1,20 +1,21 @@
-"""LAB E - planted findings for the SAST gate (Gate 3). Never deployed anywhere."""
-import os
+"""LAB E - the SAST findings from the red run, remediated. Never deployed anywhere."""
+import ipaddress
 import subprocess
 
 import yaml
 
 
 def ping(host):
-    # command injection: user input concatenated into a shell command
-    os.system("ping -c 1 " + host)
+    # validate input, then pass an argument list: no shell, no string concatenation
+    ipaddress.ip_address(host)
+    return subprocess.run(["ping", "-c", "1", host], check=False)
 
 
 def load_settings(data):
-    # unsafe deserialisation: yaml.load without a safe Loader
-    return yaml.load(data)
+    # safe_load builds only plain Python types
+    return yaml.safe_load(data)
 
 
-def run(cmd):
-    # shell=True with caller-controlled input
-    return subprocess.call(cmd, shell=True)
+def run(args):
+    # an explicit argument list, shell=False (the default)
+    return subprocess.run(list(args), check=False)

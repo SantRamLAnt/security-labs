@@ -1,0 +1,4 @@
+# Dispositioned historical findings. Each line is one finding gitleaks reported, by fingerprint.
+# 508b684 app/config.py:15 GRIDOPS_API_KEY — synthetic key generated for Lab E (unlocks nothing).
+# Removed from code in the remediation commit. Real-world equivalent: rotate first, then record.
+508b684875d6fe4e48c798b03e24cd96e5b4fb99:app/config.py:generic-api-key:15

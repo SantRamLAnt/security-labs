@@ -1,18 +1,17 @@
 """
-LAB E - planted findings for the secret-scanning gate.
+LAB E - configuration, after remediation.
 
-Both values below are FAKE. Neither is, or ever was, a real credential.
+The synthetic GRIDOPS_API_KEY committed in 508b684 has been removed. Because it is
+still in git history, Gate 1 keeps failing until the finding is formally dispositioned:
+in a real incident that means ROTATE the credential first, then either rewrite history
+or record the historical finding as accepted. This key was synthetic (it unlocks
+nothing), so it is recorded in .gitleaksignore with the reason.
 
-1. AWS's published documentation example key. Run #1 showed gitleaks (and trivy's
-   secret scanner) deliberately ignore it, so on its own it proves nothing.
-2. A random 40-character string generated for this lab on 31 Oct 2026, shaped like
-   an API key so the scanner has something real to catch. It unlocks nothing.
-
-Gate 1 must fail while (2) is in the code or the history.
+Secrets now come from the environment, never from source.
 """
+import os
 
-AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"          # documentation example: allowlisted by scanners
-GRIDOPS_API_KEY = "Vg3Oep8UUfJHRV05MdGwilP4xpgrFpEkuTD3mIZF"   # synthetic, generated for this lab
+GRIDOPS_API_KEY = os.environ.get("GRIDOPS_API_KEY")  # injected at runtime; never committed
 
 DB_HOST = "localhost"
 DB_PORT = 5432
