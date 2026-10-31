@@ -1,0 +1,19 @@
+# SYNTHETIC. The same feeders after an unreviewed edit. Five things are wrong, on purpose.
+change:
+  reason: "quick fix"            # no switching order, no approver
+substation: SUB-NORTH
+feeders:
+  - id: F101
+    voltage_kv: 13.8
+    devices:
+      - {id: CB-101,  type: breaker,  phases: [A, B, C], rating_a: 600, upstream: null,   normal: closed}
+      - {id: R-1011,  type: recloser, phases: [A, B, C], rating_a: 400, upstream: CB-101, normal: closed}
+      - {id: FU-1012, type: fuse,     phases: [A],       rating_a: 450, upstream: R-1011, normal: closed}   # fuse larger than the recloser
+      - {id: FU-1013, type: fuse,     phases: [B],       rating_a: 40,  upstream: FU-1012, normal: closed}  # B-phase fuse fed from an A-phase lateral
+      - {id: SW-12,   type: switch,   phases: [A, B, C], upstream: R-1011, ties_to: F102, normal: closed}   # tie closed: two sources in parallel
+  - id: F102
+    voltage_kv: 13.8
+    devices:
+      - {id: CB-102,  type: breaker,  phases: [A, B, C], rating_a: 600, upstream: null,   normal: closed}
+      - {id: CB-102B, type: breaker,  phases: [A, B, C], rating_a: 600, upstream: null,   normal: closed}  # second source breaker on one feeder
+      - {id: R-1021,  type: recloser, phases: [A, B, C], rating_a: 300, upstream: CB-102, normal: closed}

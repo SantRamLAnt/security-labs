@@ -1,0 +1,29 @@
+# LAB J — grid network model and control-centre perimeter, gated as code.
+name: Lab J · Grid model and perimeter policy
+on:
+  push:
+    branches: [ main ]
+    paths: [ "labs/lab-j/**", ".github/workflows/lab-j.yml" ]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policy:
+    name: "Grid model + ESP policy tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install conftest
+        run: curl -sSL https://github.com/open-policy-agent/conftest/releases/download/v0.56.0/conftest_0.56.0_Linux_x86_64.tar.gz | tar xz conftest && sudo mv conftest /usr/local/bin/
+      - name: Policy tests (exact denial counts)
+        run: |
+          set +e; labs/lab-j/run-tests.sh 2>&1 | tee t.out; rc=${PIPESTATUS[0]}
+          { echo '### Lab J policy tests (exit '"$rc"')'; echo '```'; cat t.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"; exit $rc
+      - name: The insecure perimeter, refused (verbatim)
+        if: always()
+        run: |
+          set +e; conftest test labs/lab-j/infra/esp-insecure/main.tf -p labs/lab-j/policy --namespace esp --no-color > esp.out 2>&1
+          { echo '### conftest esp-insecure (expected to fail)'; echo '```'; cat esp.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          set +e; conftest test labs/lab-j/grid/feeder-bad.yaml -p labs/lab-j/policy --namespace gridmodel --no-color > grid.out 2>&1
+          { echo '### conftest feeder-bad (expected to fail)'; echo '```'; cat grid.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
