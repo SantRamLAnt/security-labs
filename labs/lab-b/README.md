@@ -265,3 +265,14 @@ az policy assignment delete --name teardown-tag-audit --scope "/subscriptions/$S
 Leave the definitions; they cost nothing. Delete assignments and any paid
 Defender plan you enabled.
 
+
+---
+
+## RESULT — 1 Nov 2026
+
+- Custom policy `seclab-cognitive-public-access-AUDIT` (Audit): 2 of 2 Cognitive Services accounts NonCompliant,
+  `oai-seclab-lsr01` and `lasr-pai-nonprod-resource` (an older Foundry resource outside this lab).
+- Defender for Cloud's first assessment, about a day after registering `Microsoft.Security`: 36 checks — 10 Healthy,
+  7 NotApplicable, 19 Unhealthy. Its built-in "Microsoft Foundry resources should restrict network access" flagged the
+  same 2 accounts. It also flagged key-based access on both (`evidence/screens/lab-b-defender-first-assessment.png`).
+- Secure Score object exists but its value was still null on 1 Nov; no before/after delta yet.
