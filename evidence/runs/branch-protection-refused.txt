@@ -1,0 +1,21 @@
+PR #1 mergeable_state: behind
+$ gh api -X PUT repos/SantRamLAnt/security-labs/pulls/1/merge
+{"message":"5 of 5 required status checks are expected.","documentation_url":"https://docs.github.com/articles/about-protected-branches","status":"405"}
+gh: 5 of 5 required status checks are expected. (HTTP 405)
+
+
+$ gh api repos/SantRamLAnt/security-labs/branches/main/protection   (summarised)
+{
+  "applies_to_admins": true,
+  "deletion": false,
+  "force_push": false,
+  "pull_request_required": true,
+  "required_checks": [
+    "Gate 4 · Dependencies",
+    "Gate 0 · Policy and scanner self-test",
+    "Gate 1 · Secret scanning (full history)",
+    "Gate 2 · Infrastructure as code",
+    "Gate 3 · Static analysis"
+  ],
+  "up_to_date": true
+}
