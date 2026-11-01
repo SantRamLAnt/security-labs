@@ -1,9 +1,9 @@
 # CIP-010-4 R1 — configuration change management evidence
-Generated 2026-11-01 15:47 UTC from `git` and GitHub Actions by `ci/cip010_evidence.py` at commit `1bbb64a`.
+Generated 2026-11-01 16:55 UTC from `git` and GitHub Actions by `ci/cip010_evidence.py` at commit `5d6a986`.
 Self-directed lab repository, synthetic systems. Format follows the questions a CIP-010 R1 audit asks.
 
 ## R1.1 — the baseline
-The baseline is the content of these 18 files at `1bbb64a`, version-controlled; any deviation is a diff.
+The baseline is the content of these 18 files at `5d6a986`, version-controlled; any deviation is a diff.
 
 | File | Blob |
 |---|---|
@@ -43,9 +43,14 @@ The baseline is the content of these 18 files at `1bbb64a`, version-controlled; 
 Every push runs the blocking gates (secrets over full history, Checkov, Conftest/OPA, Semgrep, Trivy) and the
 policy self-tests. Lab A and Lab J configurations were also planned against a real Azure subscription before acceptance.
 
+## Branch protection on `main`, read live from the GitHub API
+- Pull request required: **yes** · approvals required: 0
+- Required status checks (strict, branch must be up to date): `Gate 4 · Dependencies`, `Gate 0 · Policy and scanner self-test`, `Gate 1 · Secret scanning (full history)`, `Gate 2 · Infrastructure as code`, `Gate 3 · Static analysis`
+- Applies to administrators: **yes** · signed commits required: **no**
+
 ## Findings an auditor would raise — stated, not hidden
-1. **No independent approval.** One person authors and accepts every change. The fix is branch protection on `main`
-   requiring a pull request, a second reviewer and passing status checks — separation of duties for R1.2.
-2. **Unsigned commits** (7 of 7). The fix is required commit signing, so authorship is provable.
-3. **Failed changes reached `main`.** The gates reported them, but nothing stopped the push. Required status checks
-   make the gate preventive instead of detective.
+1. **No independent approval.** One person authors and accepts every change. Branch protection can require a second
+   reviewer, but a one-person repository cannot satisfy it; in a team this is the separation-of-duties control for R1.2. **Open.**
+2. **Unsigned commits** (7 of 7). Required signing makes authorship provable. **Open.**
+3. **Failed changes could reach `main`.** True for the history above. **Fixed:** every change now needs a pull request with all
+   five gates passing, with no administrator bypass — the gate is preventive, not just detective.
