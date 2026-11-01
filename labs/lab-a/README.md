@@ -38,9 +38,7 @@ employer actually asks about.
 recurring audit finding is proving that a configuration change was authorised,
 tested and documented. Infrastructure as code answers that structurally: the
 baseline is a file, the change is a pull request, the test is the policy gate,
-and the evidence is the commit history. That sentence is worth memorising — it
-connects a tool to a regulatory obligation, which is the level the job is
-written at.
+and the evidence is the commit history.
 
 ---
 
@@ -199,22 +197,3 @@ Four screenshots and roughly 150 words. The write-up says:
 
 Do not pad it. The screenshots carry the weight.
 
----
-
-## INTERVIEW ANSWERS THIS LAB EARNS YOU
-
-**"How would you enforce a security baseline across cloud infrastructure?"**
-Declare it as code, gate it in the pipeline with policy as code, and make the
-denial message name the control. Advisory scanning gets ignored; a failed build
-does not.
-
-**"What's the difference between Checkov and OPA here?"**
-Checkov is a library of other people's rules — good coverage, no context about
-my environment. OPA is where I encode *our* policy, including requirements no
-public ruleset knows about. You want both: breadth from the scanner, intent
-from the policy.
-
-**"How does this help in a CIP environment?"**
-CIP-010 R1 asks you to prove a configuration change was controlled. Git history
-plus a policy gate is a cleaner audit answer than a change ticket and a
-screenshot, because it is continuous rather than point in time.

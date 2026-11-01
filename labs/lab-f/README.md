@@ -138,10 +138,8 @@ a guardrail. **The control group had the defence switched on.** The first real
 run came back 0 LEAK / 0 FAIL, which left the guarded run nothing to improve
 and the comparison with nothing to show.
 
-A security test that cannot fail is not measuring anything. If you are asked in
-an interview how you validate a control, this is the answer: you have to be able
-to produce the failure before you can claim the fix. Finding that flaw in your
-own harness is a better story than a clean result would have been.
+A security test that cannot fail is not measuring anything. To validate a control you have to be able
+to produce the failure before you can claim the fix.
 
 ### Why verdicts are not just ALLOWED
 
@@ -208,39 +206,3 @@ that build context across messages, and attacks carried inside retrieved
 documents rather than typed by the user — which is T2 in the Lab G threat model
 and the one rated High residual risk for exactly this reason.
 
----
-
-## THE WRITE-UP
-
-> I built a helpdesk assistant on Azure OpenAI with a canary token in its system
-> prompt, then tested it against the OWASP Top 10 for LLM Applications (2025)
-> with ten attacks across prompt injection, system prompt leakage, sensitive
-> information disclosure, excessive agency and unbounded consumption. The
-> baseline leaked the canary on N of 10. I then applied Azure AI Content Safety
-> Prompt Shields, removed the secret from the system prompt entirely, and added
-> output filtering — which took leaks to M. Every attempt is logged to JSON and
-> mapped to OWASP, MITRE ATLAS and NIST AI RMF controls.
-
-Fill in N and M from your own runs. Do not guess them.
-
----
-
-## INTERVIEW ANSWERS THIS EARNS YOU
-
-**"How would you secure a GenAI application?"**
-Defence in depth, and measure each layer. Platform filters catch the obvious
-attacks. The architectural fix matters more — a secret in a system prompt is a
-vulnerability by design, because the prompt is reachable by the user. And you
-need output filtering, because input filtering alone always has a bypass.
-
-**"What's the hardest LLM risk to mitigate?"**
-Indirect injection. Direct injection the user types; indirect arrives inside
-content the system was asked to process — an email, a document, a web page. The
-user never sees it. That is why one of my tests hides the payload inside a
-customer email, and why treating retrieved content as untrusted input is the
-only real answer.
-
-**"Why does this matter at a grid operator?"**
-Because the moment an assistant gets access to operational data, LLM02 stops
-being an inconvenience and becomes CIP-011 information protection. The question
-isn't whether the model is clever, it's what it can reach and what it can say.

@@ -147,8 +147,7 @@ decorative. Tune it properly, and write down which you chose and why:
   rare action.
 
 **EVIDENCE 3:** the before and after query, with the tuning rationale in two
-sentences. A tuning decision with a stated reason is worth more in an interview
-than ten untuned rules.
+sentences. A tuning decision with a stated reason is worth more than ten untuned rules.
 
 ---
 
@@ -179,52 +178,6 @@ az group delete -n rg-seclab-siem --yes --no-wait
 ```
 
 Confirm in Cost analysis the next day that ingestion has stopped.
-
----
-
-## THE WRITE-UP
-
-> I stood up Microsoft Sentinel on my own subscription and wrote five scheduled
-> analytics rules in KQL, each mapped to a MITRE ATT&CK technique and each
-> detecting the bypass of a preventive control I had built earlier — policy
-> assignments being removed, model endpoint keys being listed, privileged role
-> assignments at subscription scope, anomalous model consumption, and legacy
-> authentication. I generated the telemetry myself, tuned one rule against a
-> benign true positive rather than suppressing it, and worked one incident
-> through triage, scoping and closure. The workspace ran with a daily ingestion
-> cap and was torn down after evidence capture.
-
----
-
-## INTERVIEW ANSWERS THIS LAB EARNS YOU
-
-**"How do you decide what to detect?"**
-Work backwards from the controls. For each preventive control, ask what its
-bypass looks like in telemetry — that is the detection. It produces a set that
-covers your actual risk rather than whatever the vendor's content pack happens
-to include, and every rule has an owner and a reason, which matters when someone
-asks a year later why it exists.
-
-**"Your rule is noisy. What do you do?"**
-Find out whether the activity is rare and important, or common and uninteresting.
-If it is rare and important, the noise is a logging-hygiene problem, not a rule
-problem. If it is common, either narrow the condition on a real discriminator or
-demote it to context that corroborates other signals. What I do not do is
-exclude the account that generates the noise, because that is the account an
-attacker would use.
-
-**"What does CIP-007 R4 actually require?"**
-Log security events, alert on a defined subset, and review. The requirement is
-modest; what auditors actually test is whether the alerts went somewhere a human
-looked and whether you can show the review happened. Which is why the artifact I
-care about from this lab is the closed incident, not the rule list.
-
-**"Why does a grid operator need this differently?"**
-Because the consequence tail is physical, so the detections that matter most are
-the quiet ones — a configuration drifting, a policy disappearing, a service
-principal gaining a role at 3am. Loud attacks get noticed anyway. CIP-015 moving
-toward internal network security monitoring is the regulator saying the same
-thing: watch inside the perimeter, not just at it.
 
 ---
 

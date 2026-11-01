@@ -13,7 +13,7 @@ Advisory scanning gets ignored. A failed build does not.
 Every security tool in this pipeline is configured to **block**, not to warn.
 `soft_fail: false`, `exit-code: 1`, no `continue-on-error`. That single
 configuration choice is the difference between DevSecOps and a dashboard
-nobody reads, and it is the thing to be able to say out loud in an interview.
+nobody reads.
 
 ---
 
@@ -55,10 +55,9 @@ nobody reads, and it is the thing to be able to say out loud in an interview.
 | 3 · Static analysis | Semgrep | Insecure code patterns |
 | 4 · Dependencies and image | Trivy | Known CVEs at HIGH or CRITICAL |
 
-### Gate 0 is the one almost nobody builds, so lead with it
+### Gate 0 tests the gates
 
-Gates 1–4 are standard DevSecOps content; every candidate with a tutorial has
-them. Gate 0 asks the question underneath all of them: **who tests the tests?**
+Gates 1–4 are standard DevSecOps content. Gate 0 asks the question underneath all of them: **who tests the tests?**
 
 It runs the Lab A policy unit tests, then feeds the known-bad Kubernetes
 manifest from Lab D through the admission policies and **fails the build if that
@@ -165,9 +164,8 @@ A real remediation is:
 2. Then remove it from history (`git filter-repo` or BFG).
 3. Then force-push, and have every clone re-cloned.
 
-Say this in an interview and it demonstrates you understand that secret
-scanning is a detective control, not a preventive one. Most candidates stop
-at "I deleted the line."
+Secret scanning is a detective control, not a preventive one: deleting the line
+is not remediation.
 
 ---
 
@@ -181,31 +179,3 @@ Order: get it green in GitHub Actions first, then port. Porting a working
 pipeline teaches the platform; debugging two unfamiliar things at once teaches
 nothing.
 
----
-
-## INTERVIEW ANSWERS THIS EARNS YOU
-
-**"How do you stop developers shipping insecure infrastructure?"**
-You don't stop them, you make it fail. Advisory findings get triaged into a
-backlog and die there. A blocking gate turns security into a build error, which
-developers already know how to fix. The hard part isn't the tooling, it's
-agreeing which findings are allowed to block.
-
-**"A secret got committed. What now?"**
-Rotate first, always. The credential is compromised the moment it is pushed,
-regardless of whether anyone fetched it. Then purge history, then force-push,
-then re-clone everywhere. Deleting the line only hides it.
-
-**"How do you know your security gates still work?"**
-I test them. The pipeline's first gate runs unit tests against the OPA policy
-and feeds a known-bad Kubernetes manifest through the admission policies — if
-that workload is accepted, the build fails. Policy gates fail open when they
-break: nothing turns red, the dashboard reports zero violations, and zero
-violations looks exactly like zero rules evaluated. Every other gate is trusted
-on the assumption its rules still fire, so something has to check that.
-
-**"Checkov or OPA?"**
-Both. Checkov for breadth, OPA for the controls specific to our environment.
-And the denial message should name the control — a build that fails saying
-"NIST SC-8: TLS below 1.2" teaches the engineer something. One that says
-"policy violation" teaches them to ask someone else.
