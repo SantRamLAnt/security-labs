@@ -275,4 +275,8 @@ Defender plan you enabled.
 - Defender for Cloud's first assessment, about a day after registering `Microsoft.Security`: 36 checks — 10 Healthy,
   7 NotApplicable, 19 Unhealthy. Its built-in "Microsoft Foundry resources should restrict network access" flagged the
   same 2 accounts. It also flagged key-based access on both (`evidence/screens/lab-b-defender-first-assessment.png`).
-- Secure Score object exists but its value was still null on 1 Nov; no before/after delta yet.
+- Secure Score: **6 of 13 (46%)** on 1 Nov 2026 (`evidence/screens/lab-b-securescore-6of13.png`). This is the
+  before figure. No after figure: remediation is left open by choice, so there is no delta.
+- Correction. An earlier note here said the score was still null. That was my query, not Defender: I asked for
+  `score.current`, but this CLI version returns the field as top-level `current`, so JMESPath printed null while the
+  raw JSON held the number. The "empty is not zero" finding stands; this time the empty value came from my own query.
