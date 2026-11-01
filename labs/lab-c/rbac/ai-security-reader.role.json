@@ -1,13 +1,12 @@
 {
   "Name": "AI Security Reader",
   "IsCustom": true,
-  "Description": "Assess the AI and storage estate without the ability to change it or to obtain a credential. Built from observed activity-log operations rather than from a built-in role. Deliberately omits Microsoft.CognitiveServices/accounts/listKeys/action: a principal that can list keys is an operator, because the key is a bearer credential to the model endpoint. Controls: NIST SP 800-53 Rev 5 AC-3, AC-5, AC-6; NERC CIP-004-7 R4; NERC CIP-007-6 R5; ISO/IEC 27001:2022 A.5.15. NOTE: Microsoft.Security/regulatoryComplianceStandards/read was removed after Azure rejected it with InvalidActionOrNotAction - the action does not exist. Azure validates every action string against the provider, so a role definition cannot contain an invented permission.",
+  "Description": "Assess the AI and storage estate without the ability to change it or to obtain a credential. Built from observed activity-log operations rather than from a built-in role. Deliberately omits Microsoft.CognitiveServices/accounts/listKeys/action: a principal that can list keys is an operator, because the key is a bearer credential to the model endpoint. Controls: NIST SP 800-53 Rev 5 AC-3, AC-5, AC-6; NERC CIP-004-7 R4; NERC CIP-007-6 R5; ISO/IEC 27001:2022 A.5.15. NOTE: Microsoft.Security/regulatoryComplianceStandards/read was removed after Azure rejected it with InvalidActionOrNotAction - the action does not exist. Azure validates every action string against the provider, so a role definition cannot contain an invented permission. ALIGNED 1 Nov 2026: Microsoft.CognitiveServices/accounts/commitmentplans/read removed so this file matches the deployed definition (18 actions), verified with az role definition list against the personal-ai-nonprod scope.",
   "Actions": [
     "Microsoft.Resources/subscriptions/resourceGroups/read",
     "Microsoft.Resources/subscriptions/resources/read",
     "Microsoft.CognitiveServices/accounts/read",
     "Microsoft.CognitiveServices/accounts/deployments/read",
-    "Microsoft.CognitiveServices/accounts/commitmentplans/read",
     "Microsoft.Storage/storageAccounts/read",
     "Microsoft.Storage/storageAccounts/blobServices/read",
     "Microsoft.Insights/diagnosticSettings/read",
