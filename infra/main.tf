@@ -48,7 +48,7 @@ resource "azurerm_storage_account" "good" {
   account_replication_type = "LRS"
 
   # CIS Azure storage public access / NIST SC-28 / NERC CIP-011-3 R1
-  allow_nested_items_to_be_public = false
+  allow_nested_items_to_be_public = true   # DEMO: a "quick" change that must be refused
   public_network_access_enabled   = false
 
   # CIS Azure minimum TLS and secure transfer / NIST SC-8
