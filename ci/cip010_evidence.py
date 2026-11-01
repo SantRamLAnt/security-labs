@@ -48,10 +48,30 @@ p(f"\n{len(rows)} baseline changes. {fails} failed the security gates. All three
 p("## R1.4 / R1.5 — security controls verified before the change is accepted")
 p("Every push runs the blocking gates (secrets over full history, Checkov, Conftest/OPA, Semgrep, Trivy) and the")
 p("policy self-tests. Lab A and Lab J configurations were also planned against a real Azure subscription before acceptance.\n")
+# live branch protection state, read from the GitHub API (not asserted by hand)
+try:
+    prot = json.loads(sh("gh", "api", "repos/SantRamLAnt/security-labs/branches/main/protection"))
+except subprocess.CalledProcessError:
+    prot = None
+checks = (prot or {}).get("required_status_checks") or {}
+pr = (prot or {}).get("required_pull_request_reviews")
+admins = ((prot or {}).get("enforce_admins") or {}).get("enabled")
+signed = ((prot or {}).get("required_signatures") or {}).get("enabled")
+p("## Branch protection on `main`, read live from the GitHub API")
+if prot:
+    p(f"- Pull request required: **{'yes' if pr is not None else 'no'}** · approvals required: {pr.get('required_approving_review_count', 0) if pr else 0}")
+    p(f"- Required status checks ({'strict, branch must be up to date' if checks.get('strict') else 'not strict'}): " + ", ".join(f"`{c}`" for c in checks.get("contexts", [])))
+    p(f"- Applies to administrators: **{'yes' if admins else 'no'}** · signed commits required: **{'yes' if signed else 'no'}**\n")
+else:
+    p("- **Not protected.** Any change can be pushed straight to `main`.\n")
 p("## Findings an auditor would raise — stated, not hidden")
-p("1. **No independent approval.** One person authors and accepts every change. The fix is branch protection on `main`")
-p("   requiring a pull request, a second reviewer and passing status checks — separation of duties for R1.2.")
-p(f"2. **Unsigned commits** ({sum(1 for r in rows if r[3] != 'G')} of {len(rows)}). The fix is required commit signing, so authorship is provable.")
-p("3. **Failed changes reached `main`.** The gates reported them, but nothing stopped the push. Required status checks")
-p("   make the gate preventive instead of detective.")
+p("1. **No independent approval.** One person authors and accepts every change. Branch protection can require a second")
+p("   reviewer, but a one-person repository cannot satisfy it; in a team this is the separation-of-duties control for R1.2. **Open.**")
+p(f"2. **Unsigned commits** ({sum(1 for r in rows if r[3] != 'G')} of {len(rows)}). Required signing makes authorship provable. **{'Fixed' if signed else 'Open'}.**")
+if prot and checks.get("contexts") and admins:
+    p("3. **Failed changes could reach `main`.** True for the history above. **Fixed:** every change now needs a pull request with all")
+    p("   five gates passing, with no administrator bypass — the gate is preventive, not just detective.")
+else:
+    p("3. **Failed changes reached `main`.** The gates reported them, but nothing stopped the push. Required status checks")
+    p("   make the gate preventive instead of detective. **Open.**")
 print("\n".join(out))
