@@ -237,8 +237,7 @@ Privileged Identity Management replaces standing privilege with eligible
 privilege: you hold no role until you activate it, for a bounded window, with
 justification, approval and an audit record.
 
-You do not have P2, so you have not run it. **Say exactly that in an
-interview**, then say what you did instead:
+There is no P2 licence here, so it was not run. Stated plainly, with what was done instead:
 
 > I haven't operated PIM — it needs P2 and I wasn't going to buy a licence for a
 > lab. What I did was the problem underneath it: I pulled every role assignment
@@ -248,29 +247,5 @@ interview**, then say what you did instead:
 > design removes it in scope. You want both, and the scope work has to come
 > first or you are just time-boxing an over-broad role.
 
-A candidate who says that is more credible than one who clicked through a PIM
-tutorial, because they have described the control rather than the product.
+That describes the control rather than the product.
 
----
-
-## INTERVIEW ANSWERS THIS LAB EARNS YOU
-
-**"How do you approach least privilege in cloud?"**
-Start from observed usage, not from a role name. Pull the activity log, see
-which operations the principal actually performs, and build the role from that
-intersection. Built-in roles are a starting point and Contributor is almost
-never the right answer — it can read keys and change network configuration,
-which is most of what an attacker needs.
-
-**"What's the first thing you'd look at in an unfamiliar tenant?"**
-Standing privilege at subscription scope, service principals with credentials
-that do not expire, and whether legacy authentication is still permitted.
-Those three produce most of the real findings.
-
-**"How does identity map to CIP-004?"**
-CIP-004 R4 asks for a documented access management programme and R5 for
-revocation within a defined timeframe. In cloud the authoritative artifact is
-the role assignment list joined to an authorisation record — and the hard part
-is not granting, it is proving that everything currently granted is still
-authorised. That is a reconciliation problem, which is why the assignment
-inventory is the first step and not the last.

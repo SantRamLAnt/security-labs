@@ -179,25 +179,3 @@ Gatekeeper where Rego is already the standard elsewhere. This lab uses Kyverno
 precisely *because* Lab A already proves Rego — showing two policy engines is
 worth more than showing one twice.
 
----
-
-## INTERVIEW ANSWERS THIS LAB EARNS YOU
-
-**"How do you secure a Kubernetes workload?"**
-Admission control is where it is decided. Everything before it is advice. I
-enforce a restricted baseline — non-root, no privilege escalation, no host
-namespaces, capabilities dropped, read-only root filesystem — at the admission
-webhook, with Pod Security admission underneath as a second layer, so a failure
-of my policy engine does not fail open.
-
-**"Why is `:latest` a security problem and not just an ops problem?"**
-Because you cannot say what is running. The digest behind the tag changes
-without a manifest change, which breaks both reproducibility and your
-vulnerability record — you scanned an image, but not necessarily the one that
-is running. Pinning by digest is what makes a scan result mean anything.
-
-**"Where does container security fit in a utility?"**
-The same place as everything else in CIP-010: prove the running configuration
-matches an authorised baseline. A container is a configuration that can be
-declared, admitted or refused, and logged — which is a better audit story than
-a server someone hardened by hand two years ago.

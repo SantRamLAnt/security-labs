@@ -80,7 +80,7 @@ Four levels. Four is the number that gets used; six gets ignored.
 | **Confidential** | Harm to customers or the business | Customer PII, premise and account records, vendor contracts | Encrypted, access-scoped | Named recipients; no external forwarding | Per regulation; disposal recorded |
 | **Restricted / BCSI** | Information about BES Cyber Systems whose exposure could enable a compromise | Network diagrams, asset inventories with addresses, system configurations, credentials, **GIS data joining asset location to criticality** | Encrypted, private network path, logged access | Need-to-know; authorised list; no third-party AI processing | CIP-011 R2 disposal evidence required |
 
-### The row that matters, and the one you can speak to better than most candidates
+### The row that matters
 
 **GIS data is where Confidential becomes Restricted, and it happens by join.**
 
@@ -90,8 +90,7 @@ precision, the result describes how to cause harm — and that is the BCSI test:
 not what the attribute is called, but what the combination enables.
 
 This is the aggregation problem, it is poorly handled in most organisations
-because classification is applied per-field, and it is a point almost no
-security candidate can make from direct experience. **Lead with it.**
+because classification is applied per-field, and it is the point utility GIS work informs most directly.
 
 ---
 
@@ -164,30 +163,3 @@ the design is the deliverable.
 
 **EVIDENCE 3:** the enforced storage settings, or the labels if available.
 
----
-
-## INTERVIEW ANSWERS THIS LAB EARNS YOU
-
-**"How would you classify data in an environment you don't know yet?"**
-Not by walking the file shares. By asking what would happen if a given dataset
-appeared in public — then working backwards to the fields and, more importantly,
-the *joins* that produce that outcome. Aggregation is where classification
-schemes fail: every field is Internal and the combination is Restricted.
-
-**"What's CIP-011 in practice?"**
-Identify BCSI, protect it in storage, transit and use, and prove disposal. The
-hard part is the identification, because BCSI is defined by what the information
-*enables* rather than by where it lives. A network diagram in a PowerPoint is
-still BCSI.
-
-**"How do you stop staff pasting sensitive data into AI tools?"**
-You make the approved path faster than the unapproved one, and you enforce at
-egress. Blocking alone produces workarounds on personal devices, which is worse
-because you lose visibility too. So: a sanctioned endpoint inside the tenant,
-classification-aware DLP on the unsanctioned ones, and clear guidance on what
-may go where. The control is organisational; the enforcement is technical.
-
-**"Why does your own AI lab only use synthetic data?"**
-Because it is a public endpoint authenticated by a bearer key, and my own
-classification rules say Restricted material does not reach one. Applying my own
-scheme to my own lab is the test of whether the scheme is real.

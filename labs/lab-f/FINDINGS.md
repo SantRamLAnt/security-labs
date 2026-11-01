@@ -79,7 +79,7 @@ as equivalent would be the real mistake in this lab:
 
 Same number. Completely different assurance.
 
-That distinction is the thing to say in an interview, because it is the
+That distinction is the
 difference between a control and a hope. A defence that depends on the model
 choosing correctly is a probabilistic control, and probabilistic controls are
 graded on their worst case, not their average. A defence that removes the asset

@@ -184,8 +184,7 @@ Denies creation of a Cognitive Services / Azure OpenAI account with
 This one is personal: `oai-seclab-lsr01`, the AI resource deployed in Lab F,
 **is reachable over the public internet and protected only by an API key.**
 That is acceptable for a lab and unacceptable for anything touching operational
-data. The honest framing in an interview is not "I secured my AI endpoint" — it
-is:
+data. The honest framing is not "I secured my AI endpoint" — it is:
 
 > I deployed a model endpoint the quick way, then wrote the policy that would
 > have stopped me. In a CIP environment that endpoint belongs behind a private
@@ -227,9 +226,7 @@ az policy assignment create \
 
 **Assign in Audit before you assign in Deny. Every time.** A Deny policy
 assigned at subscription scope without a compliance pass first is how you
-discover, in production, which deployment pipelines you just broke. Say that
-sentence in an interview; it is the one that marks someone who has operated a
-policy rather than only written one.
+discover, in production, which deployment pipelines you just broke.
 
 ### Check compliance
 
@@ -268,32 +265,3 @@ az policy assignment delete --name teardown-tag-audit --scope "/subscriptions/$S
 Leave the definitions; they cost nothing. Delete assignments and any paid
 Defender plan you enabled.
 
----
-
-## INTERVIEW ANSWERS THIS LAB EARNS YOU
-
-**"What's the difference between CSPM and what your pipeline already does?"**
-Coverage and timing. The pipeline sees changes that go through the pipeline, at
-the moment of change. CSPM sees every resource, continuously, including the ones
-created by hand — which is where findings actually come from. You want both,
-and you want them to disagree sometimes, because that disagreement is how you
-find the paths that bypass your own process.
-
-**"Secure Score went up. So what?"**
-On its own, nothing. It is a weighted average of other people's priorities. It
-is useful as a *trend* against a fixed set of assessments, and useful as a
-conversation opener with an owner who has not looked at their resources. It is
-not a control objective, and treating it as one produces teams that remediate
-what is cheap rather than what is exploitable.
-
-**"Why does a compliance dashboard at 70% not mean you're 70% compliant?"**
-Because the manual controls — policy, training, documented process — are
-unassessed, and the percentage is computed over the automated ones. The number
-describes the technical subset. For a CIP audit the evidence that matters is
-mostly in the part the dashboard cannot see.
-
-**"How does this map to CIP?"**
-CIP-010 R1 wants proof that a configuration matches an authorised baseline, and
-R3 wants periodic vulnerability assessment. Continuous policy compliance state
-is strictly better evidence than a point-in-time review, because it is dated,
-automated and produces an exception list rather than an assertion.
