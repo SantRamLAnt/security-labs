@@ -3,6 +3,8 @@
 Self-directed cloud, DevSecOps and AI security labs, built against a
 Cloud / DevSecOps / AI Security analyst job description at a regional grid operator.
 
+**Portfolio (the write-up, with every result and its evidence):** https://santramlant.github.io/security-labs/
+
 **What this is:** practice, on my own GitHub account and my own Azure subscription,
 on my own time, with synthetic data. **What it is not:** professional security
 experience, or anything touching an employer's systems. Nothing in this repository
