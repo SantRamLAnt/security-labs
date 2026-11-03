@@ -13,7 +13,10 @@ see finding 4 in audit/CIP-010-R1-evidence.md.
 
 usage:  python3 ci/image_scan.py [image-or-html ...]     exit 1 on any finding
 """
-import base64, io, re, sys, glob
+import base64, io, os, re, sys, glob
+# One tesseract thread per worker: OpenMP threads inside a process pool oversubscribe the CPU
+# and made this step take 15+ minutes on a CI runner.
+os.environ.setdefault("OMP_THREAD_LIMIT", "1")
 from concurrent.futures import ProcessPoolExecutor
 from PIL import Image, ImageOps
 import pytesseract
