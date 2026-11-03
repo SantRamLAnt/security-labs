@@ -4,7 +4,7 @@
 Every row comes from `git` and the GitHub Actions API (`gh run list`). Nothing is typed by hand.
     python3 ci/cip010_evidence.py > audit/CIP-010-R1-evidence.md
 """
-import json, subprocess, datetime
+import json, os, subprocess, datetime
 
 BASELINE = ["infra/", "k8s/", "policy/", "labs/lab-j/grid/", "labs/lab-j/infra/", "labs/lab-j/policy/",
             ".github/workflows/", "ci/run-gates.sh", ".harness/", ".gitleaksignore"]
@@ -74,4 +74,14 @@ if prot and checks.get("contexts") and admins:
 else:
     p("3. **Failed changes reached `main`.** The gates reported them, but nothing stopped the push. Required status checks")
     p("   make the gate preventive instead of detective. **Open.**")
+wf = open(".github/workflows/security-gates.yml", encoding="utf-8").read() if os.path.exists(".github/workflows/security-gates.yml") else ""
+img_gate = "ci/image_scan.py" in wf and "ci/image_canary.py" in wf
+p("4. **Published identifiers, redacted after the fact.** A test service principal's client and object IDs, a role-assignment")
+p("   ID and the public IP address I worked from were visible in two published screenshots (Lab C, Lab I) and are still in this")
+p("   repository's history. They are identifiers, not credentials: there is nothing to rotate and they grant no access on their own.")
+p("   The history is deliberately not rewritten, because this package is generated from it and a force-push would invalidate every")
+p("   commit hash it cites. The correct order was to redact before publishing, not after. Same lesson as Gate 1: removing something")
+p("   after the fact is a detective control, not a preventive one. **Open in history, by decision.**" + (
+  " **Preventive control in place:** Gate 1 runs OCR over every published image and fails on an identifier; Gate 0 proves it still catches one." if img_gate else
+  " **No preventive control yet:** nothing stops the next screenshot."))
 print("\n".join(out))

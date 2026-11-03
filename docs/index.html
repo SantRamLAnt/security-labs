@@ -532,6 +532,7 @@ h2 + .lede{margin-top:16px} h3 + p{margin-top:10px}
         <p>It was caught only because every reply is stored and someone read them. A tool that logged verdicts
         alone would have produced a confident, permanent, wrong answer. <strong>Don&#8217;t close the alert on
         the rule name &#8212; open the event.</strong></p>
+        <p><strong>Torn down after evidence capture.</strong> On 3 November 2026 at 02:12 UTC the resource group <span class="mono">rg-seclab-ai</span> was deleted, with the Azure OpenAI account <span class="mono">oai-seclab-lsr01</span>, its gpt-4.1-mini deployment and the content filter. The subscription was confirmed by name before the delete, and the group read back as gone after it. The endpoint no longer serves.</p>
         <div class="slot"><b>Evidence</b>three run tables &#183; the leaked reply verbatim &#183; the three-way comparison &#183; the documented false positive &#183; JSON log of every attempt (kept locally, not in the public repo)</div>
       </div>
     </div>
@@ -748,15 +749,17 @@ h2 + .lede{margin-top:16px} h3 + p{margin-top:10px}
     <ul>
       <li>The baseline: 18 files, each with its hash.</li>
       <li>Every change to the baseline, with author, time and security-gate result.</li>
-      <li>The three findings an auditor would raise against me:
+      <li>The four findings an auditor would raise against me:
         <ul>
           <li>No independent approval: one person writes and accepts every change.</li>
           <li>Unsigned commits.</li>
           <li>Failed changes still reached the main branch, because the gates reported failures but didn&#8217;t block them.</li>
+          <li>Published identifiers, redacted after the fact. A test service principal&#8217;s client and object IDs, a role-assignment ID and the public IP address I worked from were visible in two published screenshots (Labs C and I) and are still in the repository&#8217;s history. They are identifiers, not credentials: there is nothing to rotate and they grant no access on their own. The history is deliberately not rewritten, because the evidence package is generated from it and a force-push would invalidate every commit hash it cites. The correct order was to redact before publishing, not after. Same lesson as Gate 1: removing something after the fact is a detective control, not a preventive one.</li>
         </ul>
       </li>
     </ul>
-    <p><strong>Writing down the findings against yourself is the part that earns trust.</strong> Each one is fixed by a setting. I turned on the one a single-person repository can satisfy: branch protection now requires a pull request with all five gates passing, with no administrator bypass. The package reads that setting live from GitHub, so finding 3 now reports <em>fixed</em> without anyone typing it. Independent approval and signed commits stay open, and say so.</p>
+    <p><strong>Writing down the findings against yourself is the part that earns trust.</strong> The first three are each fixed by a setting. I turned on the one a single-person repository can satisfy: branch protection now requires a pull request with all five gates passing, with no administrator bypass. The package reads that setting live from GitHub, so finding 3 now reports <em>fixed</em> without anyone typing it. Independent approval and signed commits stay open, and say so.</p>
+    <p>Finding 4 stays open in the history, by decision. The identifiers are redacted on the live page; removing them from history would break the package that reports them. What changed is the order. Gate 1 now runs text recognition over every published image and fails the build on an ID, a public IP address, an email or a key. Gate 0 renders a fresh random ID into an image every run and fails if that check misses it. It missed the first time I ran it: text recognition read a 7 as a slash, and the strict pattern let a real ID through. Fixed before it merged.</p>
     <p><a href="https://github.com/SantRamLAnt/security-labs/blob/main/audit/CIP-010-R1-evidence.md" target="_blank" rel="noopener noreferrer">Read the evidence package</a> &#183; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/ci/cip010_evidence.py" target="_blank" rel="noopener noreferrer">the generator</a></p>
   </div>
 </section>
