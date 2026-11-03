@@ -21,13 +21,13 @@ from concurrent.futures import ProcessPoolExecutor
 from PIL import Image, ImageOps
 import pytesseract
 
-# OCR misreads hex in monospace screenshots (7 -> "/", 1 -> "l", 0 -> "O"), so the GUID
+# OCR misreads hex in monospace screenshots (7 -> "/", 1 -> "l", 0 -> "O", "Q" or "@"), so the GUID
 # pattern accepts those look-alikes and normalises them; a strict [0-9a-f] pattern
 # missed real GUIDs in testing. Found by the Gate 0 canary on its first run.
-H = r"[0-9a-fA-F/lIi|oOsSzZ]"
-CONFUSABLE = str.maketrans({"/": "7", "l": "1", "I": "1", "i": "1", "|": "1", "o": "0", "O": "0", "s": "5", "S": "5", "z": "2", "Z": "2"})
+H = r"[0-9a-fA-F/lIi|oOQ@sSzZ]"
+CONFUSABLE = str.maketrans({"/": "7", "l": "1", "I": "1", "i": "1", "|": "1", "o": "0", "O": "0", "Q": "0", "@": "0", "s": "5", "S": "5", "z": "2", "Z": "2"})
 PATTERNS = {
-    "guid":         rf"(?<![0-9A-Za-z]){H}{{8}}-{H}{{4}}-{H}{{4}}(?:-{H}{{4}}(?:-{H}{{6,12}})?)?",
+    "guid":         rf"(?<![0-9A-Za-z]){H}{{7,10}}-{H}{{3,5}}-{H}{{3,5}}(?:-{H}{{3,5}}(?:-{H}{{6,13}})?)?",
     "public-ipv4":  r"\b(?!10\.|127\.|0\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
     "email":        r"(?<![\w*.+-])[A-Za-z0-9._%+-]{2,}@[A-Za-z0-9-]+\.[A-Za-z.]{2,}",
     "key-material": r"(AccountKey=|SharedAccessSignature=|[?&]sig=|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9]{20,})",
@@ -56,16 +56,26 @@ def ocr(img):
     return text
 
 
+def repair(text):
+    """Undo the OCR errors measured on 120 rendered GUIDs (18% were missed before this):
+    a 7 read as "/7" and a 1 read as "1l" (one character becomes two), and a space slipped in
+    beside a hyphen. The GUID pattern also allows each group to be one character long or short."""
+    text = re.sub(r"/(?=7)", "", text)
+    text = re.sub(r"1l|l1", "1", text)
+    text = re.sub(r"(?<=[0-9A-Za-z])[ \t]+-|-[ \t]+(?=[0-9A-Za-z])", "-", text)
+    return text
+
+
 def scan_one(item):
     name, img = item
-    text = ocr(img)
+    text = repair(ocr(img))
     hits = []
     for kind, pat in PATTERNS.items():
         for m in re.finditer(pat, text, re.I):
             v = m.group(0)
             if kind == "guid":
                 v = v.translate(CONFUSABLE).lower()
-                if not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}.*", v) or not re.search(r"\d", v):
+                if not re.fullmatch(r"[0-9a-f]{7,10}-[0-9a-f]{3,5}-[0-9a-f]{3,5}.*", v) or not re.search(r"\d", v):
                     continue
             if v.lower() in ALLOW:
                 continue
