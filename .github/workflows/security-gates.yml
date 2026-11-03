@@ -91,6 +91,14 @@ jobs:
             printf '```\nAWS documentation example key AKIAIOSFODNN7EXAMPLE: NOT detected (allowlisted by gitleaks defaults)\n```\n' >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Image redaction check must still catch a freshly generated GUID
+        run: |
+          sudo apt-get install -y -qq tesseract-ocr >/dev/null
+          pip install -q pytesseract==0.3.13 pillow==11.0.0
+          set -o pipefail
+          python3 ci/image_canary.py | tee canary.out
+          { echo '### Gate 0 image-redaction canary'; echo '```'; cat canary.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
   secret-scan:
     name: "Gate 1 · Secret scanning (full history)"
     runs-on: ubuntu-latest
@@ -105,6 +113,16 @@ jobs:
           ./gitleaks git . --config .gitleaks.toml --redact --no-banner -v 2>&1 | tee gate.out
           rc=${PIPESTATUS[0]}
           { echo '### Gate 1 gitleaks, full history (exit '"$rc"')'; echo '```'; sed 's/\x1b\[[0-9;]*m//g' gate.out | tail -n 80; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+      - name: Published images carry no identifiers (OCR over evidence/screens and the Pages site)
+        if: success() || failure()
+        run: |
+          sudo apt-get install -y -qq tesseract-ocr >/dev/null
+          pip install -q pytesseract==0.3.13 pillow==11.0.0
+          set +e
+          python3 ci/image_scan.py | tee images.out
+          rc=${PIPESTATUS[0]}
+          { echo '### Gate 1 image redaction check (exit '"$rc"')'; echo '```'; cat images.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           exit $rc
 
   iac-scan:

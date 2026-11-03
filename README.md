@@ -22,6 +22,7 @@ or a random string generated for the lab. None is, or ever was, a real credentia
 | Path | What |
 |---|---|
 | `.github/workflows/security-gates.yml` | Lab E: five blocking CI gates (Gate 0 tests the policies themselves) |
+| `ci/image_scan.py`, `ci/image_canary.py` | Redaction check, automated: Gate 1 runs OCR over every published image (`evidence/screens/`, the Pages site) and fails on an ID, public IP, email or key; Gate 0 renders a fresh GUID each run and fails if the check misses it |
 | `policy/`, `policy-tests/` | Lab A: OPA/Rego storage policy and its unit tests |
 | `k8s/` | Lab D: Kyverno admission policies and the insecure / conforming manifests |
 | `infra/` | The Terraform the IaC gate scans |
