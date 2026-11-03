@@ -552,7 +552,7 @@ h2 + .lede{margin-top:16px} h3 + p{margin-top:10px}
       </div>
     </div>
 
-    <div class="lab">
+    <div class="lab" id="lab-h">
       <div class="hd"><span class="id">LAB H</span><h3>Data security posture for AI</h3><span class="st part">Design</span></div>
       <div class="bd">
         <p>A four-level classification scheme &#8212; Public, Internal, Confidential, Restricted/BCSI &#8212;
@@ -562,8 +562,8 @@ h2 + .lede{margin-top:16px} h3 + p{margin-top:10px}
         stations, criticality and address-level precision, the result describes how to cause harm. That is the
         CIP-011 test &#8212; not what the field is called, but what the combination enables. Classification
         schemes fail at aggregation because labels get applied per field.</p>
-        <p>Applied back to my own AI system: <span class="mono">oai-seclab-lsr01</span> is a public endpoint
-        authenticated by a bearer key, so by my own rules it may only ever see synthetic data. <strong>Applying
+        <p>The same failure applies to customer data. Joined to service lines and outage history, a premise, an address and a meter describe a household: where it is, what feeds it, when it goes dark. None of those fields is personal information under Massachusetts 201 CMR 17, which counts only a name together with a Social Security, driver&#8217;s licence or state ID number, or a financial account or card number. That definition is a fixed list, so it cannot see a combination it did not anticipate. The rule that follows: <strong>classify a combination by what it enables, not by its most sensitive field</strong>, and attach the label to the join (the layer, the export, the query result) rather than only to the column.</p>
+        <p>Applied back to my own AI system: <span class="mono">oai-seclab-lsr01</span> was a public endpoint authenticated by a bearer key, so by my own rules it only ever saw synthetic data. It was deleted on 3 November 2026. <strong>Applying
         the scheme to my own lab is the test of whether the scheme is real.</strong></p>
         <div class="ctrl"><span>NERC CIP-011-3 R1</span><span>CIP-011-3 R2</span><span>CIP-004-7 R4</span><span>NIST RA-2</span><span>AC-4</span><span>SC-28</span><span>MP-4</span><span>MP-6</span><span>SI-12</span><span>AI RMF MANAGE 2.2</span><span>ISO 27001 A.5.12</span><span>A.5.13</span><span>A.8.12</span><span>OWASP LLM02</span></div>
         <div class="slot"><b>Evidence</b><a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-h/README.md" target="_blank" rel="noopener noreferrer">the classification matrix and DLP policy design</a>. Purview was not deployed (it needs a licence a personal tenant doesn&#8217;t have)</div>
@@ -699,6 +699,14 @@ h2 + .lede{margin-top:16px} h3 + p{margin-top:10px}
       </div>
     </div>
 
+    <h3 style="margin-top:40px">Massachusetts &#183; the gas utility, 2023&#8211;now</h3>
+    <ul>
+      <li><strong>201 CMR 17.00</strong> &#8212; Standards for the Protection of Personal Information of Residents of the Commonwealth, in force since 1 March 2010. Every person that owns or licenses a Massachusetts resident&#8217;s personal information, including an employer holding its own employees&#8217;, must keep a comprehensive written information security program. 17.04 lists the technical controls: secure authentication with unique IDs and lockout after repeated failed attempts, access limited to those who need the information for their job, encryption across public networks and on portable devices, monitoring, firewalls, patching, malware protection, and employee training. 17.03 adds a designated owner, rules for records taken off premises, disciplinary measures, removal of terminated employees&#8217; access, vendor oversight by contract, annual review and documented post-incident review.</li>
+      <li><strong>&#8220;Personal information&#8221; is narrow</strong>: a name together with a Social Security, driver&#8217;s licence or state ID number, or a financial account or card number. Asset, address and meter data are not on that list.</li>
+      <li><strong>Why it sits here and not under water</strong>: the regulation&#8217;s definition of &#8220;person&#8221; excludes agencies, boards, commissions and political subdivisions, and the water and sewer commission is a public body.</li>
+      <li><strong>M.G.L. c. 93H</strong> &#8212; the statute the regulation is issued under, and the state&#8217;s breach-notification law.</li>
+    </ul>
+
     <h3 style="margin-top:40px">Cross-sector frameworks</h3>
     <ul>
       <li><strong>NIST CSF 2.0</strong> (Feb 2024) &#8212; Govern, Identify, Protect, Detect, Respond, Recover. Govern is the one people forget.</li>
@@ -786,9 +794,11 @@ h2 + .lede{margin-top:16px} h3 + p{margin-top:10px}
           <tr><td>Automated attribute validation and QA/QC in Python</td><td>Detective controls that run every time, not when someone remembers</td><td>NIST SI-7, CA-7 &#183; CSF DE.CM</td></tr>
           <tr><td>Trained interns and wrote the procedures they followed</td><td>Awareness and role-based training; procedures as the control a new person can actually follow</td><td>NERC CIP-004-7 R1, R2 &#183; NIST AT-2, AT-3</td></tr>
           <tr><td>Worked inside a water system covered by federal risk and resilience requirements, then a gas system under federal integrity management</td><td>Regulated operations: evidence, retention and assessment cycles as normal working conditions</td><td>AWIA 2018 &#167;2013 (SDWA &#167;1433) &#183; PHMSA DIMP, 49 CFR 192 Subpart P</td></tr>
+          <tr><td>Since 2023, worked as a user inside the written information security program Massachusetts requires: access scoped to role, unique credentials with MFA, approved systems only, recurring security training</td><td>Operating under an information security program as a user rather than an administrator. The friction a control creates is where people start working around it, and that is visible from this seat, not from the one that writes the policy</td><td>MA 201 CMR 17.03, 17.04 &#183; M.G.L. c. 93H &#183; NIST AC-2, AC-6, AT-2 &#183; CIP-004-7 R1, R4</td></tr>
         </tbody>
       </table>
     </div>
+    <p><strong>What GIS teaches about information protection is aggregation.</strong> A GIS platform is a join engine. A premise, a service connection, a meter, an address, an outage history: each field on its own is mundane. Joined on location, they say which house sits on which line, what feeds it and when it lost service. Classification schemes fail exactly there, because labels get applied field by field, and a map is the tool built to defeat per-field labelling. I met that problem in the work before I met it in a framework. <a href="#lab-h">Lab H</a> turns it into a rule.</p>
 
     <h3 style="margin-top:48px">Four utility systems: worked in three, studying the fourth</h3>
     <p>Water, sewer and gas I know from the inside. Electric I&#8217;m learning deliberately, from first principles up to the bulk-system operations a grid operator runs, so I understand what the control-centre systems are actually controlling.</p>
@@ -802,11 +812,11 @@ h2 + .lede{margin-top:16px} h3 + p{margin-top:10px}
     <h3 style="margin-top:48px">Security as a daily operating condition</h3>
     <p>In both utilities, security wasn&#8217;t a department you visited. It was the conditions you worked under every day. I&#8217;ve worked under these controls as a <strong>user, not an administrator</strong>. That user&#8217;s-eye view matters: when a control creates friction, that&#8217;s where people start working around it.</p>
     <div class="daily">
-      <div><b>Multi-factor authentication everywhere</b><span>No single password opens anything. MFA on every corporate system, including remote access.</span><code>NIST IA-2(1), IA-2(2) &#183; CIP-005-7 R2 &#183; CISA CPG</code></div>
-      <div><b>Need-to-know document sharing</b><span>Cloud documents and SharePoint shared with named people or designated groups, never &#8220;anyone with the link&#8221;.</span><code>NIST AC-3, AC-6 &#183; CIP-011-3 R1 &#183; CIP-004-7 R4</code></div>
-      <div><b>Least privilege on systems of record</b><span>Edit rights scoped to role. Production changes only through controlled sessions, never ad hoc.</span><code>NIST AC-6, CM-5 &#183; CIP-004-7 R4, R5</code></div>
-      <div><b>Phishing and security awareness e-training</b><span>Recurring required e-learning on phishing and social engineering. Reporting a suspicious message is the expected habit, not an exception.</span><code>NIST AT-2, AT-2(1), IR-6 &#183; CIP-004-7 R1 (quarterly reinforcement)</code></div>
-      <div><b>Data stays in approved systems</b><span>No company data in personal tools or outside AI services. My own labs run on synthetic data for the same reason.</span><code>NIST AC-20, SC-7 &#183; CIP-011-3 R1 &#183; AI RMF GOVERN</code></div>
+      <div><b>Multi-factor authentication everywhere</b><span>No single password opens anything. MFA on every corporate system, including remote access.</span><code>NIST IA-2(1), IA-2(2) &#183; CIP-005-7 R2 &#183; MA 201 CMR 17.04(1) &#183; CISA CPG</code></div>
+      <div><b>Need-to-know document sharing</b><span>Cloud documents and SharePoint shared with named people or designated groups, never &#8220;anyone with the link&#8221;.</span><code>NIST AC-3, AC-6 &#183; CIP-011-3 R1 &#183; CIP-004-7 R4 &#183; MA 201 CMR 17.04(2)(a)</code></div>
+      <div><b>Least privilege on systems of record</b><span>Edit rights scoped to role. Production changes only through controlled sessions, never ad hoc.</span><code>NIST AC-6, CM-5 &#183; CIP-004-7 R4, R5 &#183; MA 201 CMR 17.04(2)</code></div>
+      <div><b>Phishing and security awareness e-training</b><span>Recurring required e-learning on phishing and social engineering. Reporting a suspicious message is the expected habit, not an exception.</span><code>NIST AT-2, AT-2(1), IR-6 &#183; CIP-004-7 R1 (quarterly reinforcement) &#183; MA 201 CMR 17.04(8), 17.03(2)(b)</code></div>
+      <div><b>Data stays in approved systems</b><span>No company data in personal tools or outside AI services. My own labs run on synthetic data for the same reason.</span><code>NIST AC-20, SC-7 &#183; CIP-011-3 R1 &#183; MA 201 CMR 17.03(2)(c) &#183; AI RMF GOVERN</code></div>
     </div>
 
     <h3 style="margin-top:48px">Why this applies at ISO New England</h3>
