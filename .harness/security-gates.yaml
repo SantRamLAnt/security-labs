@@ -31,6 +31,7 @@ pipeline:
             script: |
               git clone --quiet https://github.com/SantRamLAnt/security-labs.git src && cd src
               curl -sSL https://github.com/open-policy-agent/conftest/releases/download/v0.56.0/conftest_0.56.0_Linux_x86_64.tar.gz | tar xz conftest
+              python3 -m pip install --quiet numpy pyyaml || python3 -m pip install --quiet --break-system-packages numpy pyyaml
               CONFTEST=$PWD/conftest labs/lab-j/run-tests.sh
               echo; echo "== the insecure perimeter, refused =="; ./conftest test labs/lab-j/infra/esp-insecure/main.tf -p labs/lab-j/policy --namespace esp --no-color || true
               echo; echo "== the unreviewed feeder edit, refused =="; ./conftest test labs/lab-j/grid/feeder-bad.yaml -p labs/lab-j/policy --namespace gridmodel --no-color || true
