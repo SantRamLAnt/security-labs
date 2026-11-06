@@ -160,7 +160,7 @@ figure.small img{max-width:820px}
       </div>
     </div>
 
-    <p>Two numbers come out of the rank. <strong>Islands = nodes &minus; rank &minus; 1</strong> counts pieces of the feeder with no path back to the substation. <strong>Loops = edges &minus; rank</strong> counts closed loops, and a radial feeder has none. Once the R-1011 column is gone, nothing connects R-1011 and FU-1012 to the rest of the matrix. That shows up as one island.</p>
+    <p>Two numbers come out of the rank. <strong>Islands = nodes &minus; rank &minus; 1</strong> counts pieces of the feeder with no path back to the substation. <strong>Loops = edges &minus; rank</strong> counts closed loops, and a radial feeder has none. Once the R-1011 column is gone, nothing connects R-1011 and FU-1012 to the rest of the matrix, which shows up as one island.</p>
     <p>When a phase is radial, the matrix with the substation row taken out is square and invertible. Kirchhoff's laws then become two linear solves. The current law <code>A<sub>r</sub>&thinsp;i = d</code> gives the current in every section from the loads. The voltage law <code>A<sub>r</sub><sup>T</sup>&thinsp;v = z&middot;i</code> gives the voltage drop at every node from the section impedances.</p>
 
     <div class="tablewrap wide">
