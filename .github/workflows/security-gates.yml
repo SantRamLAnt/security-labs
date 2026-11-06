@@ -77,7 +77,10 @@ jobs:
           # A random token generated at run time: never committed, never a real credential.
           d=$(mktemp -d)
           # (not "tr </dev/urandom | head": under pipefail that dies of SIGPIPE, exit 141)
-          tok=$(python3 -c "import secrets,string; a=string.ascii_letters+string.digits; print(''.join(secrets.choice(a) for _ in range(40)))")
+          # Alphabet without vowels or common consonant pairs: gitleaks' generic rule skips a candidate that
+          # contains an ordinary word (its stopword list), so a fully random alphanumeric key was missed in
+          # about 1 run in 75 (4 of 300 locally, e.g. one containing "HtML"). This alphabet: 0 misses in 3,000.
+          tok=$(python3 -c "import secrets; a='bfgjkqvwxzBFGJKQVWXZ0123456789'; print(''.join(secrets.choice(a) for _ in range(40)))")
           printf 'GRIDOPS_API_KEY = "%s"\n' "$tok" > "$d/canary.py"
           if gitleaks detect --no-git --source "$d" --redact --no-banner -v; then
             echo "::error::gitleaks did NOT detect the canary secret. Gate 1 cannot be trusted."; exit 1
