@@ -1,0 +1,26 @@
+# SYNTHETIC. The normal model with one edit: R-1011 recorded as normally open after work.
+# Every policy rule still passes. Part of F101 now has no path to a source.
+# Electrical data for the matrix analysis (grid/topology.py), also synthetic:
+#   load_a  = load in amps per phase at the device's downstream end, on each phase it carries
+#   z_ohm   = [R, X] impedance in ohms of the line section feeding that device
+#   ties_at = the device on the other feeder where a tie switch lands
+change:
+  switching_order: SO-2026-1104-007
+  approved_by: system-operations-engineering
+  reason: "Close out maintenance on R-1011"
+substation: SUB-NORTH
+feeders:
+  - id: F101
+    voltage_kv: 13.8
+    devices:
+      - {id: CB-101,  type: breaker,  phases: [A, B, C], rating_a: 600, upstream: null,   normal: closed, z_ohm: [0.00, 0.00], load_a: 0}
+      - {id: R-1011,  type: recloser, phases: [A, B, C], rating_a: 400, upstream: CB-101, normal: open,   z_ohm: [0.35, 0.75], load_a: 120}
+      - {id: FU-1012, type: fuse,     phases: [A],       rating_a: 65,  upstream: R-1011, normal: closed, z_ohm: [0.60, 0.40], load_a: 38}
+      - {id: FU-1013, type: fuse,     phases: [B],       rating_a: 40,  upstream: R-1011, normal: closed, z_ohm: [0.80, 0.50], load_a: 22}
+      - {id: SW-12,   type: switch,   phases: [A, B, C], upstream: R-1011, ties_to: F102, normal: open, ties_at: R-1021}
+  - id: F102
+    voltage_kv: 13.8
+    devices:
+      - {id: CB-102,  type: breaker,  phases: [A, B, C], rating_a: 600, upstream: null,   normal: closed, z_ohm: [0.00, 0.00], load_a: 0}
+      - {id: R-1021,  type: recloser, phases: [A, B, C], rating_a: 300, upstream: CB-102, normal: closed, z_ohm: [0.30, 0.65], load_a: 90}
+      - {id: FU-1022, type: fuse,     phases: [C],       rating_a: 50,  upstream: R-1021, normal: closed, z_ohm: [0.50, 0.35], load_a: 30}

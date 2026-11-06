@@ -1,4 +1,4 @@
-# LAB J — grid network model and control-centre perimeter, gated as code.
+# LAB J: grid network model and control-centre perimeter, gated as code, plus the matrix analysis.
 name: Lab J · Grid model and perimeter policy
 on:
   push:
@@ -13,12 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install numpy and PyYAML (for grid/topology.py)
+        run: pip install --quiet numpy pyyaml
       - name: Install conftest
         run: curl -sSL https://github.com/open-policy-agent/conftest/releases/download/v0.56.0/conftest_0.56.0_Linux_x86_64.tar.gz | tar xz conftest && sudo mv conftest /usr/local/bin/
-      - name: Policy tests (exact denial counts)
+      - name: Policy tests (exact denial counts) and matrix checks
         run: |
           set +e; labs/lab-j/run-tests.sh 2>&1 | tee t.out; rc=${PIPESTATUS[0]}
-          { echo '### Lab J policy tests (exit '"$rc"')'; echo '```'; cat t.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"; exit $rc
+          { echo '### Lab J policy tests and matrix analysis (exit '"$rc"')'; echo '```'; cat t.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"; exit $rc
       - name: The insecure perimeter, refused (verbatim)
         if: always()
         run: |
