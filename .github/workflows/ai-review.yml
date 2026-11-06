@@ -67,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        repeat: [1, 2, 3]
+        repeat: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -75,7 +75,10 @@ jobs:
       - name: Install Ollama and pull the model
         run: |
           curl -fsSL https://ollama.com/install.sh | sh
-          for i in $(seq 1 30); do curl -sf http://127.0.0.1:11434/api/version && break; sleep 2; done
+          # The install script starts a systemd service, and GitHub runners don't run systemd,
+          # so start the server directly if it isn't answering.
+          curl -sf http://127.0.0.1:11434/api/version || { nohup ollama serve > ollama.log 2>&1 & }
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:11434/api/version && break; sleep 2; done
           ollama pull "$MODEL"
       - name: Review every file
         run: python3 ci/ai-review/review.py ci/ai-review/work ${{ matrix.repeat }} model-${{ matrix.repeat }}.json --model "$MODEL"
