@@ -8,7 +8,7 @@ Learning in Python*.
 
 There are three kinds of customer: residential (a morning bump and an evening peak), commercial
 (flat through the working day) and overnight EV charging. Each profile is divided by its own daily
-average so PCA sees the shape of the day and not the size of the customer.
+average, so a big store and a small apartment with the same daily pattern look the same to PCA.
 
 | components kept | variance explained | mean squared error | eigenvalues left out |
 |---|---|---|---|

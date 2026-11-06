@@ -104,7 +104,7 @@ figure.small img{max-width:820px}
   <div class="wrap">
     <p class="kick">Luis Antonio Santiago-Ramirez &middot; Springfield, Massachusetts</p>
     <h1>The engineering under the security labs</h1>
-    <p class="sub">This year I built ten cloud security labs. This page pulls out the math and computer engineering inside them. It also has projects built on MIT OpenCourseWare lectures, and the coursework I'm doing next.</p>
+    <p class="sub">This year I built ten cloud security labs. This page pulls out the math and computer engineering inside them. It also has projects built on the courses I worked on during 2026 and on MIT OpenCourseWare lectures.</p>
     <div class="links">
       <a href="./" target="_blank" rel="noopener">Security portfolio</a>
       <a href="https://github.com/SantRamLAnt/security-labs" target="_blank" rel="noopener">Source on GitHub</a>
@@ -380,27 +380,126 @@ figure.small img{max-width:820px}
   </div>
 </section>
 
+<section id="pca">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">07</span> &nbsp;Eigenvectors &middot; PCA on load profiles</p>
+    <h2>Six hundred customers, two directions that matter</h2>
+    <p>A smart meter gives each customer 24 hourly readings a day, so each customer is a point in 24 dimensions. Principal component analysis finds the few directions in that space where customers actually differ. This follows Imperial College London&#8217;s PCA course (mean and covariance, inner products, orthogonal projections, then PCA itself), week 4 of DeepLearning.AI&#8217;s linear algebra course, and the dimensionality reduction and clustering module of Michigan&#8217;s Applied Machine Learning in Python.</p>
+    <p>The 600 customers are made up, in three kinds: residential with a morning bump and an evening peak, commercial with a flat working day, and overnight EV charging. Each profile is divided by its own daily average, so a big store and a small apartment with the same daily pattern look the same to PCA.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Components kept</th><th class="num">Variance explained</th><th class="num">Mean squared error</th><th class="num">Eigenvalues left out</th></tr>
+        <tr><td class="k">1</td><td class="num">61.96%</td><td class="num">3.26444</td><td class="num">3.26444</td></tr>
+        <tr><td class="k">2</td><td class="num">92.10%</td><td class="num">0.67819</td><td class="num">0.67819</td></tr>
+        <tr><td class="k">3</td><td class="num">94.86%</td><td class="num">0.44072</td><td class="num">0.44072</td></tr>
+      </table>
+    </div>
+    <p>The last two columns match. The error from keeping k components is exactly the sum of the eigenvalues you drop, and that&#8217;s the reason to pick k from the eigenvalues. The first component is daytime against overnight, and the second is the evening peak. The script also checks that the eigenvalues match the SVD of the data, that P<sup>2</sup> = P for the projection onto two components, and that adding the hours into four 6-hour totals (a linear map A) turns the covariance into A<sup>T</sup>CA.</p>
+    <p>One check came from the scaling. Every scaled profile sums to 24, so the data sit in 23 dimensions and the smallest eigenvalue has to be zero, with the all-ones direction as its eigenvector. It is, to 1e-16. Clustering the first two component scores with k-means, written out, puts every customer back with its type, though PCA was never told the types. Real meter data wouldn&#8217;t separate that cleanly, because my three made-up kinds are very different from each other.</p>
+    <figure>
+      <a href="img/engineering/pca-run.png" target="_blank" rel="noopener"><img src="img/engineering/pca-run.png" alt="GitHub Actions output: PCA variance explained, reconstruction error equal to left-out eigenvalues, and k-means agreement" loading="lazy"></a>
+      <figcaption>The PCA checks as they ran on GitHub. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42289003895" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
+    </figure>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/pca/load_profiles.py" target="_blank" rel="noopener">engineering/pca/load_profiles.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/pca/README.md" target="_blank" rel="noopener">write-up</a></p>
+  </div>
+</section>
+
+<section id="classifier">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">08</span> &nbsp;Machine learning &middot; written out</p>
+    <h2>Metal or plastic, from install year and diameter</h2>
+    <p>Gas records sometimes have the pipe material missing, and federal integrity rules (49 CFR 192.1007) make operators account for unknowns. Install year and diameter say a lot about material. This builds logistic regression and a network with one hidden layer in NumPy, following weeks 2 and 3 of DeepLearning.AI&#8217;s Neural Networks and Deep Learning, gradient descent and Newton&#8217;s method from their calculus course, backpropagation from Imperial&#8217;s multivariate calculus course, and the evaluation module of Michigan&#8217;s Applied Machine Learning in Python.</p>
+    <p>The 3,000 records are made up, from rules written in the script: cast iron and steel before about 1970, plastic phased in over the 1970s, steel kept for mains 12 inches and up, and 3% of labels flipped to stand in for record errors. Nothing comes from any utility.</p>
+    <p>Logistic regression is fit three ways. Gradient descent takes 872 iterations, and Newton&#8217;s method, using the Hessian X<sup>T</sup>SX/n, takes 8. They land on the same weights, and scikit-learn agrees to 2e-8. Both gradients, including the backpropagation through the hidden layer, are checked against finite differences.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>900 held-out records, by group</th><th class="num">Actual share metallic</th><th class="num">Logistic</th><th class="num">Hidden layer</th></tr>
+        <tr><td class="k">Under 12 in, before 1968</td><td class="num">0.97</td><td class="num">0.92</td><td class="num">0.97</td></tr>
+        <tr><td class="k">Under 12 in, 1980 or later</td><td class="num">0.09</td><td class="num">0.17</td><td class="num">0.07</td></tr>
+        <tr><td class="k">12 in and up, 1980 or later</td><td class="num">0.95</td><td class="num">0.76</td><td class="num">0.94</td></tr>
+        <tr><td class="k">ROC AUC, all held-out records</td><td class="num"></td><td class="num">0.942</td><td class="num">0.938</td></tr>
+        <tr><td class="k">Log-loss, all held-out records</td><td class="num"></td><td class="num">0.291</td><td class="num">0.231</td></tr>
+      </table>
+    </div>
+    <p>I expected the hidden layer to win on ROC AUC, and it didn&#8217;t. Both models put the mains in nearly the same order. The difference is in the probabilities. &#8220;Metallic&#8221; here is roughly &#8220;old or large&#8221;, and a straight-line boundary can&#8217;t draw an &#8220;or&#8221;, so logistic regression calls new large mains about three-quarters metal when 95% are. AUC only measures order, so it misses that. Log-loss catches it, and the hidden layer is lower on all five cross-validation folds.</p>
+    <p>Calling a metal main plastic is the costly mistake, so the script also picks a threshold on the training data for 95% recall of metallic mains. On the held-out records recall came out at 0.944 and 0.931, a little under target, because a threshold tuned on one sample doesn&#8217;t carry over exactly.</p>
+    <figure>
+      <a href="img/engineering/classifier-run.png" target="_blank" rel="noopener"><img src="img/engineering/classifier-run.png" alt="GitHub Actions output: gradient descent vs Newton iterations, held-out metrics, calibration by group and cross-validation" loading="lazy"></a>
+      <figcaption>The classifier checks as they ran on GitHub. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42289003895" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
+    </figure>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/classifier/material_model.py" target="_blank" rel="noopener">engineering/classifier/material_model.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/classifier/README.md" target="_blank" rel="noopener">write-up</a></p>
+  </div>
+</section>
+
+<section id="optimization">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">09</span> &nbsp;Optimization &middot; power systems</p>
+    <h2>The cost of the next megawatt, and a power flow by Newton&#8217;s method</h2>
+    <p>Two standard power-system problems, worked with the calculus from KAIST&#8217;s Applied Math for Materials Science and Engineering (maxima and minima, Lagrange multipliers, differentiating with respect to a parameter) and Imperial&#8217;s multivariate calculus course (the Jacobian, Taylor linearization, Newton-Raphson). All numbers are synthetic.</p>
+    <p><b>Economic dispatch.</b> Three generators with quadratic fuel costs must supply a demand. With a Lagrange multiplier, every unit that isn&#8217;t at a limit runs where its marginal cost equals &lambda;, and the whole problem becomes a linear system.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Demand</th><th class="num">Output (MW)</th><th class="num">&lambda; ($/MWh)</th><th class="num">d(cost)/d(demand)</th></tr>
+        <tr><td class="k">450 MW</td><td class="num">264.8, 136.1, 49.1</td><td class="num">21.178</td><td class="num">21.178</td></tr>
+        <tr><td class="k">800 MW</td><td class="num">400.0 (at max), 265.0, 135.0</td><td class="num">23.240</td><td class="num">23.240</td></tr>
+      </table>
+    </div>
+    <p>The last column is the change in the minimum total cost when demand moves 1 MW each way, and it equals &lambda;. So the multiplier is the cost of serving the next megawatt, which is the idea behind an energy price. A search over every split 0.1 MW apart finds the same minimum, and at 800 MW the first unit hits its 400 MW limit and the other two are re-solved around it.</p>
+    <p><b>Power flow.</b> On three buses, the power balance equations are nonlinear in the voltage angles and magnitudes. Newton-Raphson linearizes them with the Jacobian at every step. The largest mismatch went 1.0, 3.7e-2, 9.7e-5, 7.7e-10, 1.9e-15, roughly squaring each time, which is what quadratic convergence looks like. Gauss-Seidel, a separate method, needed 16 iterations to reach the same answer. The &#8220;DC&#8221; power flow keeps only the first-order Taylor terms. Its line flows came within 2.3 MW of the full answer here, and it can&#8217;t see the 3.03 MW of losses.</p>
+    <figure>
+      <a href="img/engineering/optimization-run.png" target="_blank" rel="noopener"><img src="img/engineering/optimization-run.png" alt="GitHub Actions output: economic dispatch with lambda equal to marginal cost, and Newton-Raphson mismatch by iteration" loading="lazy"></a>
+      <figcaption>Dispatch and power flow checks as they ran on GitHub. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42289003895" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
+    </figure>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/optimization/dispatch_and_power_flow.py" target="_blank" rel="noopener">engineering/optimization/dispatch_and_power_flow.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/optimization/README.md" target="_blank" rel="noopener">write-up</a></p>
+  </div>
+</section>
+
+<section id="languages">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">10</span> &nbsp;Programming languages</p>
+    <h2>An interpreter and a type checker</h2>
+    <p>The policy checks in the security labs are written in Rego, a language with its own evaluator. KAIST&#8217;s Programming Languages I and II build languages like that from the ground up in Scala. This is the same sequence in Python: identifiers, first-class functions with closures, recursion, and then a type checker for numbers, booleans and function types.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>What it tests</th><th class="num">Result</th></tr>
+        <tr><td class="k">Sum of 1 to 100 by recursion; 10 factorial</td><td class="num">5050; 3,628,800</td></tr>
+        <tr><td class="k">The same program under static scope and dynamic scope</td><td class="num">11 and 110</td></tr>
+        <tr><td class="k">Bad programs rejected before running (5 kinds)</td><td class="num">5 of 5</td></tr>
+        <tr><td class="k">Random programs the checker accepted that failed at run time</td><td class="num">0 of 799</td></tr>
+        <tr><td class="k">Random programs it rejected that do crash if run anyway</td><td class="num">2,142 of 2,201</td></tr>
+      </table>
+    </div>
+    <p>The scope test is the one from the course. A function that uses a variable y sees the y where it was written, not the y where it&#8217;s called, so the answer is 11. With dynamic scope it would be 110. The random-program test is a rough check of type soundness: if the checker accepts a program, it should never get stuck on a type error while running. The other side matters too. Of the programs it rejected, 59 would have run fine because they never reach the bad branch, which is the price of checking before running. To tie it back to Lab J, the section loading calculation from <code>topology.py</code> is written in the language too: 430 A on a 600 A device is 71%.</p>
+    <figure>
+      <a href="img/engineering/languages-run.png" target="_blank" rel="noopener"><img src="img/engineering/languages-run.png" alt="GitHub Actions output: interpreter examples, static vs dynamic scope, type errors and the soundness test" loading="lazy"></a>
+      <figcaption>The interpreter and type checker tests as they ran on GitHub. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42289003895" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
+    </figure>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/languages/tiny_lang.py" target="_blank" rel="noopener">engineering/languages/tiny_lang.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/languages/README.md" target="_blank" rel="noopener">write-up</a></p>
+  </div>
+</section>
+
 <section id="study">
   <div class="wrap">
-    <p class="eyebrow"><span class="n">07</span> &nbsp;Coursework</p>
+    <p class="eyebrow"><span class="n">11</span> &nbsp;Coursework</p>
     <h2>What I'm studying, and where it shows up</h2>
-    <p>From my degree I have Elementary Statistics, Quantitative Methods for the Social and Physical Sciences, and Data Collection and Analysis. I don't have calculus, linear algebra, digital logic or circuits from a classroom, so this is the plan to fill them in. I started in November 2026, and I'll mark each one complete only when it is.</p>
+    <p>From my degree I have Elementary Statistics, Quantitative Methods for the Social and Physical Sciences, and Data Collection and Analysis. I don&#8217;t have calculus, linear algebra, digital logic or circuits from a classroom. These are the courses I worked on during 2026 to fill that in. The last column names the modules each one covers and the section of this page where that material is used. Numbers are section numbers.</p>
     <div class="tablewrap wide">
       <table>
-        <tr><th>Area</th><th>Course</th><th>Status</th><th>Where it shows up here</th></tr>
-        <tr><td class="k">Linear algebra, calculus, probability</td><td><a href="https://www.coursera.org/specializations/mathematics-for-machine-learning-and-data-science" target="_blank" rel="noopener">Mathematics for Machine Learning and Data Science</a> (DeepLearning.AI)</td><td><span class="tag now">In progress</span></td><td>Sections 01 and 02</td></tr>
-        <tr><td class="k">Linear algebra, multivariate calculus, PCA</td><td><a href="https://www.coursera.org/specializations/mathematics-machine-learning" target="_blank" rel="noopener">Mathematics for Machine Learning</a> (Imperial College London)</td><td><span class="tag now">In progress</span></td><td>Section 05: projections and least squares</td></tr>
-        <tr><td class="k">Linear algebra</td><td><a href="https://www.coursera.org/learn/math-for-ai-beginner-part-1-linear-algebra" target="_blank" rel="noopener">Math for AI Beginner Part 1: Linear Algebra</a> (KAIST)</td><td><span class="tag now">In progress</span></td><td>Section 01: rank, inverses, eigenvalues</td></tr>
-        <tr><td class="k">Calculus, series, differential equations</td><td><a href="https://www.coursera.org/learn/applied-math-for-materials-science-and-engineering" target="_blank" rel="noopener">Applied Math for Materials Science and Engineering</a> (KAIST)</td><td><span class="tag now">In progress</span></td><td>Section 06</td></tr>
-        <tr><td class="k">Programming in C, Linux</td><td><a href="https://www.coursera.org/specializations/c-programming-linux" target="_blank" rel="noopener">C Programming with Linux</a> (Dartmouth and IMT)</td><td><span class="tag now">In progress</span></td><td>SHA-256 in C, below</td></tr>
-        <tr><td class="k">How languages work: semantics, interpreters, type systems</td><td><a href="https://www.coursera.org/learn/programming-languages-1" target="_blank" rel="noopener">Programming Languages I</a> and <a href="https://www.coursera.org/learn/programming-languages2" target="_blank" rel="noopener">II</a> (KAIST)</td><td><span class="tag now">In progress</span></td><td>Nothing here yet</td></tr>
-        <tr><td class="k">Machine learning</td><td><a href="https://www.coursera.org/learn/python-machine-learning" target="_blank" rel="noopener">Applied Machine Learning in Python</a> (University of Michigan) and <a href="https://www.coursera.org/learn/neural-networks-deep-learning" target="_blank" rel="noopener">Neural Networks and Deep Learning</a> (DeepLearning.AI)</td><td><span class="tag now">In progress</span></td><td>Lab F, and the confusion matrix in section 02</td></tr>
-        <tr><td class="k">Data pipelines on AWS</td><td><a href="https://www.coursera.org/professional-certificates/data-engineering" target="_blank" rel="noopener">Data Engineering Professional Certificate</a> (DeepLearning.AI and AWS)</td><td><span class="tag now">In progress</span></td><td>The CI pipelines in the main portfolio</td></tr>
-        <tr><td class="k">Machine learning</td><td><a href="https://www.coursera.org/specializations/dartmouth-practical-machine-learning" target="_blank" rel="noopener">Practical Machine Learning: Foundations to Neural Networks</a> (Dartmouth)</td><td><span class="tag next">Next</span></td><td>Lab F, and the confusion matrix in section 02</td></tr>
-        <tr><td class="k">Analog circuits</td><td><a href="https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" target="_blank" rel="noopener">6.002 Circuits and Electronics</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Next</span></td><td>Section 01: Kirchhoff's laws and the node method</td></tr>
-        <tr><td class="k">Calculus</td><td><a href="https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010/" target="_blank" rel="noopener">18.01SC Single Variable Calculus</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Alongside</span></td><td>Section 06</td></tr>
-        <tr><td class="k">Digital logic, computer architecture</td><td><a href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/" target="_blank" rel="noopener">6.004 Computation Structures</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Alongside</span></td><td>Section 04 and the SHA-256 work</td></tr>
-        <tr><td class="k">Depth in linear algebra and probability</td><td><a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/" target="_blank" rel="noopener">18.06SC Linear Algebra</a> and <a href="https://ocw.mit.edu/courses/18-05-introduction-to-probability-and-statistics-spring-2022/" target="_blank" rel="noopener">18.05 Probability and Statistics</a> (MIT OpenCourseWare)</td><td><span class="tag next">Alongside</span></td><td>Sections 01, 02 and 05</td></tr>
+        <tr><th>Area</th><th>Course</th><th>When</th><th>Modules, and where they show up</th></tr>
+        <tr><td class="k">Linear algebra, calculus, probability</td><td><a href="https://www.coursera.org/specializations/mathematics-for-machine-learning-and-data-science" target="_blank" rel="noopener">Mathematics for Machine Learning and Data Science</a> (DeepLearning.AI): <a href="https://www.coursera.org/learn/machine-learning-linear-algebra" target="_blank" rel="noopener">Linear Algebra</a>, <a href="https://www.coursera.org/learn/machine-learning-calculus" target="_blank" rel="noopener">Calculus</a>, <a href="https://www.coursera.org/learn/machine-learning-probability-and-statistics" target="_blank" rel="noopener">Probability &amp; Statistics</a></td><td><span class="tag now">2026</span></td><td>Rank and Gaussian elimination: 01. Eigenvalues and PCA (week 4): 07. Gradient descent and Newton&#8217;s method: 08, 09. Confidence intervals: 02</td></tr>
+        <tr><td class="k">Linear algebra, multivariate calculus, PCA</td><td><a href="https://www.coursera.org/specializations/mathematics-machine-learning" target="_blank" rel="noopener">Mathematics for Machine Learning</a> (Imperial College London)</td><td><span class="tag now">2026</span></td><td>Projections: 05. Jacobian, Taylor series, Newton-Raphson, Lagrange multipliers: 09. Backpropagation: 08. PCA: 07</td></tr>
+        <tr><td class="k">Linear algebra</td><td><a href="https://www.coursera.org/learn/math-for-ai-beginner-part-1-linear-algebra" target="_blank" rel="noopener">Math for AI Beginner Part 1: Linear Algebra</a> (KAIST)</td><td><span class="tag now">2026</span></td><td>Linear independence and inverses: 01. Eigenvalues and diagonalization: 07</td></tr>
+        <tr><td class="k">Calculus of one and many variables</td><td><a href="https://www.coursera.org/learn/applied-math-for-materials-science-and-engineering" target="_blank" rel="noopener">Applied Math for Materials Science and Engineering</a> (KAIST)</td><td><span class="tag now">2026</span></td><td>Maxima and minima, Lagrange multipliers, differentiating with respect to a parameter: 09. Integration: 06</td></tr>
+        <tr><td class="k">Programming in C, Linux</td><td><a href="https://www.coursera.org/specializations/c-programming-linux" target="_blank" rel="noopener">C Programming with Linux</a> (Dartmouth and IMT)</td><td><span class="tag now">2026</span></td><td>Arrays, pointers and memory layout: the stride test in 04. SHA-256 in C, below</td></tr>
+        <tr><td class="k">How languages work</td><td><a href="https://www.coursera.org/learn/programming-languages-1" target="_blank" rel="noopener">Programming Languages I</a> and <a href="https://www.coursera.org/learn/programming-languages2" target="_blank" rel="noopener">II</a> (KAIST)</td><td><span class="tag now">2026</span></td><td>Identifiers, closures, scope, recursion, type checking: 10</td></tr>
+        <tr><td class="k">Machine learning</td><td><a href="https://www.coursera.org/learn/python-machine-learning" target="_blank" rel="noopener">Applied Machine Learning in Python</a> (University of Michigan)</td><td><span class="tag now">2026</span></td><td>Logistic regression, cross-validation, ROC, threshold choice: 08. Clustering and dimensionality reduction: 07. Confusion matrices: 02</td></tr>
+        <tr><td class="k">Neural networks</td><td><a href="https://www.coursera.org/learn/neural-networks-deep-learning" target="_blank" rel="noopener">Neural Networks and Deep Learning</a> (DeepLearning.AI)</td><td><span class="tag now">2026</span></td><td>Logistic regression as a network, vectorization, one hidden layer, backpropagation: 08</td></tr>
+        <tr><td class="k">Data pipelines on AWS</td><td><a href="https://www.coursera.org/professional-certificates/data-engineering" target="_blank" rel="noopener">Data Engineering Professional Certificate</a> (DeepLearning.AI and AWS)</td><td><span class="tag now">2026</span></td><td>Batch pipelines, infrastructure as code, orchestration: the CI pipelines and Terraform in the main portfolio</td></tr>
+        <tr><td class="k">Machine learning</td><td><a href="https://www.coursera.org/specializations/dartmouth-practical-machine-learning" target="_blank" rel="noopener">Practical Machine Learning: Foundations to Neural Networks</a> (Dartmouth)</td><td><span class="tag next">Next</span></td><td>08 and Lab F</td></tr>
+        <tr><td class="k">Analog circuits</td><td><a href="https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" target="_blank" rel="noopener">6.002 Circuits and Electronics</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Next</span></td><td>01: Kirchhoff&#8217;s laws and the node method</td></tr>
+        <tr><td class="k">Calculus</td><td><a href="https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010/" target="_blank" rel="noopener">18.01SC Single Variable Calculus</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Alongside</span></td><td>06</td></tr>
+        <tr><td class="k">Digital logic, computer architecture</td><td><a href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/" target="_blank" rel="noopener">6.004 Computation Structures</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Alongside</span></td><td>04 and the SHA-256 work</td></tr>
+        <tr><td class="k">Depth in linear algebra and probability</td><td><a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/" target="_blank" rel="noopener">18.06SC Linear Algebra</a> and <a href="https://ocw.mit.edu/courses/18-05-introduction-to-probability-and-statistics-spring-2022/" target="_blank" rel="noopener">18.05 Probability and Statistics</a> (MIT OpenCourseWare)</td><td><span class="tag next">Alongside</span></td><td>01, 02 and 05</td></tr>
       </table>
     </div>
     <h3>Next: SHA-256 in C</h3>
