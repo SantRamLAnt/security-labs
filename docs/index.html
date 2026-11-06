@@ -517,7 +517,7 @@ h2 + .lede{margin-top:16px} h3 + p{margin-top:10px}
         <span class="mono">safe&#8230;to repair</span> inside <strong>not</strong> safe to repair. That&#8217;s called negation
         blindness, and it&#8217;s a common false positive in text-matching detection.</p>
         <p>I only caught it because every reply is stored and I read them. A tool that logged verdicts alone
-        would have kept the wrong answer.</p>
+        would have kept the wrong answer. When I later wrote 21 regression cases for the checker, one of them caught a miss in my own fix (<a href="engineering.html#trials">the before-and-after is here</a>).</p>
         <p><strong>Torn down after evidence capture.</strong> On 3 November 2026 at 02:12 UTC the resource group <span class="mono">rg-seclab-ai</span> was deleted, with the Azure OpenAI account <span class="mono">oai-seclab-lsr01</span>, its gpt-4.1-mini deployment and the content filter. The subscription was confirmed by name before the delete, and the group read back as gone after it. The endpoint no longer serves.</p>
         <div class="slot"><b>Evidence</b>three run tables &#183; the leaked reply verbatim &#183; the three-way comparison &#183; the documented false positive &#183; JSON log of every attempt (kept locally, not in the public repo)</div>
       </div>
