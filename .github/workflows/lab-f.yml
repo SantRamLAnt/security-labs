@@ -20,8 +20,11 @@ jobs:
           set -o pipefail
           python3 labs/lab-f/test_misinformation.py | tee t.out
           { echo '### Lab F regression cases'; echo '```'; cat t.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-      - name: Confidence intervals (pinned values)
+      - name: Confidence intervals and their coverage (pinned values)
         run: |
           set -o pipefail
-          python3 labs/lab-f/stats.py --check | tee s.out
+          cd labs/lab-f
+          python3 stats.py --check | tee ../../s.out
+          python3 coverage.py --check | tee -a ../../s.out
+          cd ../..
           { echo '### Lab F intervals'; echo '```'; cat s.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

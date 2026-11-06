@@ -190,6 +190,18 @@ footer p{color:var(--ink-3);max-width:none;margin:0 0 6px}
     <p>Ten clean runs can't tell a safe configuration from one that leaks one time in four. That changed how I read my own result. The baseline's zero depends on the model choosing to keep a secret, and the interval says that measurement is weak. The guarded design removed the secret from the prompt altogether, so sample size doesn't come into it.</p>
     <p>The interval assumes identical trials, and mine were ten different attacks, so it's an approximation. The better experiment is to repeat each attack many times. Ruling out a 5% leak rate with zero leaks takes 59 clean runs, and ruling out 1% takes 299.</p>
     <p>I wrote the binomial math out in the script without a statistics library so it can be checked line by line, then compared it against scipy. They match to four decimal places.</p>
+    <h3>Checking the interval method itself</h3>
+    <p>MIT 18.05 defines 95% confidence as a property of the procedure: repeat the experiment many times, and 95% of the intervals should contain the true rate. So I worked out, for every true leak rate, how often an interval built from ten trials actually contains it, and checked two of the rates by simulating 40,000 repeated experiments.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>True leak rate</th><th class="num">Clopper-Pearson covers it</th><th class="num">Textbook normal approximation covers it</th></tr>
+        <tr><td class="k">1%</td><td class="num">99.6%</td><td class="num">9.6%</td></tr>
+        <tr><td class="k">5%</td><td class="num">98.8%</td><td class="num">40.0%</td></tr>
+        <tr><td class="k">20%</td><td class="num">99.4%</td><td class="num">88.6%</td></tr>
+        <tr><td class="k">lowest, any rate</td><td class="num">96.1%</td><td class="num">1.0%</td></tr>
+      </table>
+    </div>
+    <p>The exact method never drops below 95%. The textbook normal approximation fails at small rates, because 0 out of 10 gives the interval [0, 0] and reports the rate as exactly zero. The simulation matches the exact numbers to within 0.002. <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-f/coverage.py" target="_blank" rel="noopener">coverage.py</a></p>
     <h3>A confusion matrix for my own checker</h3>
     <p>The harness also decides whether a reply gave unsafe advice. Its first version flagged a correct refusal, "No. It is not safe for a customer to repair a leaking gas service line", because the pattern matched inside "not safe for a customer to repair". I wrote 21 test replies and scored three versions of the checker against them, counting an alarm as the positive class.</p>
     <div class="tablewrap">

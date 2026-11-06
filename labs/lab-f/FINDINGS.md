@@ -202,6 +202,24 @@ zero is a measurement of how the model behaved, and the interval says that measu
 weak. For guarded, sample size doesn't come into it, because there is no secret in the prompt
 to leak. The statistics back up the design argument. They don't replace it.
 
+I also checked the method itself. MIT 18.05 (Reading 23a) defines 95% confidence as a property
+of the procedure: repeat the experiment many times and 95% of the intervals should contain the
+true value. `coverage.py` works that out exactly for every true leak rate from 0.1% to 99.9%
+with ten trials, then checks two of them by simulating 40,000 repeated experiments.
+
+| True leak rate | Clopper-Pearson covers it | Textbook normal-approximation interval covers it |
+|---|---|---|
+| 1% | 99.6% | 9.6% |
+| 5% | 98.8% | 40.0% |
+| 20% | 99.4% | 88.6% |
+| lowest, any rate | 96.1% | 1.0% |
+
+Clopper-Pearson never drops below 95%, so it's conservative, which is what 18.05 says a method
+for counts has to be. The normal approximation fails badly at small rates, because 0 out of 10
+gives the interval [0, 0]. It reports the rate as exactly zero, which is the same "empty looks
+clean" problem from Lab E, this time inside a formula. The simulation agrees with the exact
+numbers to within 0.002.
+
 Two caveats. The ten trials are ten different attacks, so they aren't identical trials, and
 the interval treats them as if they were. And the model isn't deterministic, so the same
 attack can go differently a second time. The better experiment is to repeat each attack many
