@@ -1,0 +1,25 @@
+# Engineering notes: offline maths checks. No credentials, no cloud resources.
+name: Engineering · least-squares georeferencing
+on:
+  push:
+    branches: [ main ]
+    paths: [ "engineering/**", ".github/workflows/engineering.yml" ]
+  pull_request:
+    paths: [ "engineering/**", ".github/workflows/engineering.yml" ]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  georef:
+    name: "Affine fit checks"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install --quiet numpy
+      - name: Fit and checks
+        run: |
+          set -o pipefail
+          python3 engineering/georef/affine_fit.py --check | tee g.out
+          { echo '### Least-squares georeferencing'; echo '```'; cat g.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

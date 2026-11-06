@@ -98,7 +98,7 @@ footer p{color:var(--ink-3);max-width:none;margin:0 0 6px}
   <div class="wrap">
     <p class="kick">Luis Antonio Santiago-Ramirez &middot; Springfield, Massachusetts</p>
     <h1>The engineering under the security labs</h1>
-    <p class="sub">This year I built ten cloud security labs. This page pulls out the math and computer engineering inside them, and lists the coursework I'm doing next.</p>
+    <p class="sub">This year I built ten cloud security labs. This page pulls out the math and computer engineering inside them, adds a least-squares project from my GIS work, and lists the coursework I'm doing next.</p>
     <div class="links">
       <a href="./" target="_blank" rel="noopener">Security portfolio</a>
       <a href="https://github.com/SantRamLAnt/security-labs" target="_blank" rel="noopener">Source on GitHub</a>
@@ -169,8 +169,19 @@ footer p{color:var(--ink-3);max-width:none;margin:0 0 6px}
       <li>I broke the matrix on purpose by dropping the &minus;1 from every column, and 4 of the 11 tests failed.</li>
     </ul>
     <p>My first version had a bug. On phase C of the island fixture nothing below R-1011 carries phase C, so its node never made it into the graph. Its 120 A load disappeared and phase C came back "radial". A missing load looked exactly like a clean result. Every device's load point is now a node whether the device is open or closed, and a test pins it.</p>
+    <h3>When the feeder has a loop</h3>
+    <p>The current law by itself can&#8217;t say how current splits around a loop, so the closed tie in the bad fixture stopped the analysis above. The node method from MIT 6.002 (Lecture 3) handles it. Each branch current becomes a voltage difference times an admittance, and the whole network becomes one system, <code>Y e = f</code> with <code>Y = M diag(1/z) M<sup>T</sup></code>. MIT 18.06 (Lecture 12) writes the same matrix as A<sup>T</sup>CA.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Phase A</th><th class="num">Tie open</th><th class="num">Tie closed</th></tr>
+        <tr><td class="k">CB-101 (feeder F101)</td><td class="num">158.0 A</td><td class="num">115.0 A</td></tr>
+        <tr><td class="k">CB-102 (feeder F102)</td><td class="num">90.0 A</td><td class="num">133.0 A</td></tr>
+        <tr><td class="k">SW-12 (tie switch)</td><td class="num">open</td><td class="num">43.0 A</td></tr>
+      </table>
+    </div>
+    <p>With the tie closed, the two feeders share the load in inverse proportion to their path impedance, and 43 A of F101&#8217;s load crosses the tie from F102. Treating the tie as a short, that&#8217;s a current divider you can work by hand: 248 A &times; |z<sub>2</sub>| / (|z<sub>1</sub>| + |z<sub>2</sub>|) = 115.0 A on CB-101, which is what the matrix gives. On the radial feeder the node method reproduces every number above. Kirchhoff&#8217;s voltage law holds around the loop, which the null space of M gives directly, to 1e-14 V.</p>
     <p>This is a per-phase linear model with constant-current loads and no coupling between phases. A real study would use an AC load flow. It's a screening check on a synthetic model, and that's how I use it.</p>
-    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-j/grid/topology.py" target="_blank" rel="noopener">labs/lab-j/grid/topology.py</a> &middot; tests: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-j/grid/test_topology.py" target="_blank" rel="noopener">test_topology.py</a></p>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-j/grid/topology.py" target="_blank" rel="noopener">topology.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-j/grid/nodal.py" target="_blank" rel="noopener">nodal.py</a> &middot; tests: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-j/grid/test_topology.py" target="_blank" rel="noopener">test_topology.py</a>, <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-j/grid/test_nodal.py" target="_blank" rel="noopener">test_nodal.py</a></p>
   </div>
 </section>
 
@@ -258,9 +269,29 @@ footer p{color:var(--ink-3);max-width:none;margin:0 0 6px}
   </div>
 </section>
 
+<section id="leastsquares">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">05</span> &nbsp;Least squares &middot; georeferencing</p>
+    <h2>Georeferencing a drone image by hand</h2>
+    <p>When you georeference an image in ArcGIS Pro, you click control points: a pixel in the image and the surveyed coordinate of the same spot on the ground. Pro fits the transform by least squares and reports an RMS error. This project does that fit by hand for a first-order transform, following the least-squares unit of MIT 18.06. Nine control points give eighteen equations for six unknowns, so the answer is a projection: the normal equations <code>A<sup>T</sup>A x&#770; = A<sup>T</sup>b</code>, with the error perpendicular to every column of A.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Synthetic test, 3 cm pixels rotated 1.5&deg;</th><th class="num">Result</th></tr>
+        <tr><td class="k">Recovered pixel size and rotation</td><td class="num">3.001 cm, 1.491&deg;</td></tr>
+        <tr><td class="k">RMS error on the 9 control points</td><td class="num">2.4 cm</td></tr>
+        <tr><td class="k">RMS error on 3 points held back from the fit</td><td class="num">3.8 cm</td></tr>
+        <tr><td class="k">One easting mistyped by 5 m</td><td class="num">RMS 157 cm</td></tr>
+      </table>
+    </div>
+    <p>The held-back points are the honest number, because the RMS Pro shows is measured on the same points the fit was built from. Refitting without each point in turn finds the mistyped one: it lands 5.00 m from the fit of the other eight. Until it&#8217;s removed it also pulls every other point off, by as much as 1.08 m.</p>
+    <p>Two ideas from 18.06 show up directly. The normal equations work with A<sup>T</sup>A, whose condition number is the square of A&#8217;s: about 150 million on raw pixel coordinates against 12,000 for A. Centring the coordinates first brings A down to about 2,900, and QR avoids forming A<sup>T</sup>A at all. QR, the normal equations and numpy&#8217;s solver agree here to 1e-12, because the problem is small.</p>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/georef/affine_fit.py" target="_blank" rel="noopener">engineering/georef/affine_fit.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/georef/README.md" target="_blank" rel="noopener">write-up</a></p>
+  </div>
+</section>
+
 <section id="study">
   <div class="wrap">
-    <p class="eyebrow"><span class="n">05</span> &nbsp;Coursework</p>
+    <p class="eyebrow"><span class="n">06</span> &nbsp;Coursework</p>
     <h2>What I'm studying, and where it shows up</h2>
     <p>From my degree I have Elementary Statistics, Quantitative Methods for the Social and Physical Sciences, and Data Collection and Analysis. I don't have calculus, linear algebra, digital logic or circuits from a classroom, so this is the plan to fill them in. I started in November 2026, and I'll mark each one complete only when it is.</p>
     <div class="tablewrap wide">
@@ -270,8 +301,8 @@ footer p{color:var(--ink-3);max-width:none;margin:0 0 6px}
         <tr><td class="k">Programming in C, Linux</td><td><a href="https://www.coursera.org/specializations/c-programming-linux" target="_blank" rel="noopener">C Programming with Linux</a> (Dartmouth and IMT)</td><td><span class="tag now">In progress</span></td><td>SHA-256 in C, below</td></tr>
         <tr><td class="k">Digital logic, computer architecture</td><td><a href="https://www.coursera.org/learn/nand2tetris1" target="_blank" rel="noopener">From Nand to Tetris, Part I</a> (Hebrew University)</td><td><span class="tag next">Next</span></td><td>Sections 04 and the SHA-256 work</td></tr>
         <tr><td class="k">Machine learning</td><td><a href="https://www.coursera.org/specializations/dartmouth-practical-machine-learning" target="_blank" rel="noopener">Practical Machine Learning: Foundations to Neural Networks</a> (Dartmouth)</td><td><span class="tag next">Next</span></td><td>Lab F, and the confusion matrix in section 02</td></tr>
-        <tr><td class="k">Analog circuits</td><td><a href="https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" target="_blank" rel="noopener">6.002 Circuits and Electronics</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Next</span></td><td>Section 01 uses Kirchhoff's laws</td></tr>
-        <tr><td class="k">Depth in linear algebra and probability</td><td><a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/" target="_blank" rel="noopener">18.06SC Linear Algebra</a> and <a href="https://ocw.mit.edu/courses/18-05-introduction-to-probability-and-statistics-spring-2022/" target="_blank" rel="noopener">18.05 Probability and Statistics</a> (MIT OpenCourseWare)</td><td><span class="tag next">Alongside</span></td><td>Problem sets, as practice</td></tr>
+        <tr><td class="k">Analog circuits</td><td><a href="https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" target="_blank" rel="noopener">6.002 Circuits and Electronics</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Next</span></td><td>Section 01: Kirchhoff's laws and the node method</td></tr>
+        <tr><td class="k">Depth in linear algebra and probability</td><td><a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/" target="_blank" rel="noopener">18.06SC Linear Algebra</a> and <a href="https://ocw.mit.edu/courses/18-05-introduction-to-probability-and-statistics-spring-2022/" target="_blank" rel="noopener">18.05 Probability and Statistics</a> (MIT OpenCourseWare)</td><td><span class="tag next">Alongside</span></td><td>Sections 01, 02 and 05</td></tr>
       </table>
     </div>
     <h3>Next: SHA-256 in C</h3>
