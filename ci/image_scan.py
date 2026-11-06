@@ -68,7 +68,12 @@ def repair(text):
 
 def scan_one(item):
     name, img = item
-    text = repair(ocr(img))
+    return name, find(repair(ocr(img)))
+
+
+def find(text):
+    """Identifier-shaped strings in OCR text. Split out so ci/measure_redaction.py can score
+    the same logic with and without repair()."""
     hits = []
     for kind, pat in PATTERNS.items():
         for m in re.finditer(pat, text, re.I):
@@ -80,7 +85,7 @@ def scan_one(item):
             if v.lower() in ALLOW:
                 continue
             hits.append((kind, v))
-    return name, sorted(set(hits))
+    return sorted(set(hits))
 
 
 def main(args):

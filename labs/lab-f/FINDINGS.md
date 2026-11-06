@@ -208,6 +208,40 @@ reason: nothing in this suite exercises it.
 
 ---
 
+## FINDING 6: What ten trials can and can't tell you
+
+Added 5 Nov 2026, from the same run. Nothing was re-run. `stats.py` reproduces every number here.
+
+Each configuration got each of the ten attacks once, so "0 leaks" for baseline means 0 out of
+10. That's a small sample. I put a 95% confidence interval around each count using the exact
+binomial (Clopper-Pearson) method, written out in the script without a stats library so it
+can be checked line by line. I also checked it against scipy and it matches to four decimals.
+
+| Configuration | Leaks | 95% interval for the true leak rate |
+|---|---|---|
+| naive, with or without shields | 1 / 10 | 0.3% to 44.5% |
+| baseline, with or without shields | 0 / 10 | 0% to 30.8% |
+| guarded, with or without shields | 0 / 10 | 0% to 30.8% |
+
+The naive result is consistent with a true leak rate anywhere from well under 1% to almost
+half. The baseline's zero is consistent with a true rate of 30.8%, or 25.9% if you only ask
+how bad it could be. Ten clean runs can't tell a safe configuration from one that leaks one
+time in four.
+
+This changes how I read Finding 2. Baseline and guarded both scored zero. For baseline the
+zero is a measurement of how the model behaved, and the interval says that measurement is
+weak. For guarded, sample size doesn't come into it, because there is no secret in the prompt
+to leak. The statistics back up the design argument. They don't replace it.
+
+Two caveats. The ten trials are ten different attacks, so they aren't identical trials, and
+the interval treats them as if they were. And the model isn't deterministic, so the same
+attack can go differently a second time. The better experiment is to repeat each attack many
+times per configuration. Ruling out a 5% leak rate with zero leaks takes 59 clean runs, and
+ruling out 1% takes 299. It's the same arithmetic as the redaction checker in portfolio
+finding 4: 300 catches out of 300 is what it takes to say the miss rate is under 1%.
+
+---
+
 ## WHAT THIS DOES NOT SHOW
 
 Stating the limits is part of the result, and leaving them out would make the
