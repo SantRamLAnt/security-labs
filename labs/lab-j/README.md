@@ -1,18 +1,18 @@
-# LAB J: The grid as configuration. Network model and control-centre perimeter, gated as code
+# LAB J: The grid as configuration. Network model and control-center perimeter, gated as code
 Self-directed lab · synthetic model · Terraform planned in my own subscription, never applied
 
 ## The idea in one sentence
 Two things a grid operator should never change casually are the electrical network's normal
-configuration and the perimeter around its control centre. Here both are written as files,
+configuration and the perimeter around its control center. Here both are written as files,
 and CI refuses a bad change before a person has to catch it.
 
 ## Part 1: the distribution network model (`grid/`, `policy/grid.rego`)
 A synthetic substation with two radial 13.8 kV feeders. The rules come from how a
-distribution system actually works, not from a security catalogue:
+distribution system actually works, not from a security catalog:
 
 | Rule | Electrical reason | Control |
 |---|---|---|
-| Every change carries a switching order and an approver | An unreviewed record edit is an unauthorised configuration change | NERC CIP-010-4 R1.2 · NIST CM-3, CM-5 |
+| Every change carries a switching order and an approver | An unreviewed record edit is an unauthorized configuration change | NERC CIP-010-4 R1.2 · NIST CM-3, CM-5 |
 | A tie between feeders is normally open | Closed, it parallels two sources: the feeder is no longer radial and protection assumptions break | operational baseline |
 | One source breaker per feeder | A radial feeder has exactly one source | network model integrity |
 | A device cannot carry a phase its upstream device lacks | A B-phase fuse cannot be fed from an A-phase lateral | phase connectivity |
@@ -22,13 +22,13 @@ These are screening rules on a synthetic model. They are **not** a protection co
 study, a load flow, or switching authority.
 
 ## Part 2: the Electronic Security Perimeter (`infra/`, `policy/esp.rego`)
-Corporate, intermediate-system and control-centre subnets in Azure (Terraform, azurerm v4).
+Corporate, intermediate-system and control-center subnets in Azure (Terraform, azurerm v4).
 
 | Rule | Control |
 |---|---|
-| Inbound to the control-centre zone only from the intermediate system | NERC CIP-005-7 R1.2, R2.1 · NIST SC-7, AC-17 |
+| Inbound to the control-center zone only from the intermediate system | NERC CIP-005-7 R1.2, R2.1 · NIST SC-7, AC-17 |
 | Every allow rule carries its reason | NERC CIP-005-7 R1.3 |
-| No public IP in the control-centre zone | NERC CIP-005-7 R1.1 · NIST SC-7(4) |
+| No public IP in the control-center zone | NERC CIP-005-7 R1.1 · NIST SC-7(4) |
 | Deny-all inbound stated explicitly | NERC CIP-005-7 R1.3 · NIST SC-7(5) |
 
 ## Part 3: the feeder as a matrix (`grid/topology.py`)
@@ -57,7 +57,7 @@ and Kirchhoff's laws turn into two linear solves:
 | `feeder-island` | R-1011 recorded as open after maintenance | **0** | R-1011's load point and everything below it has no path to the substation, on all three phases |
 
 The island fixture is the reason I built this. It's an ordinary record mistake, it passes
-every policy rule, and the matrix catches it straight away.
+every policy rule, and the matrix catches it right away.
 
 How I know the numbers are right:
 

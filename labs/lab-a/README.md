@@ -35,7 +35,7 @@ employer actually asks about.
 | **CIS Microsoft Azure Foundations Benchmark** | Storage: public access disabled, secure transfer required, minimum TLS | Each is a named deny rule |
 
 **Why CIP-010 R1 is the headline.** In a NERC CIP environment the hardest
-recurring audit finding is proving that a configuration change was authorised,
+recurring audit finding is proving that a configuration change was authorized,
 tested and documented. Infrastructure as code answers that structurally: the
 baseline is a file, the change is a pull request, the test is the policy gate,
 and the evidence is the commit history.

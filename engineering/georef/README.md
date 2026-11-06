@@ -22,7 +22,7 @@ e = b - A x_hat          error, perpendicular to every column of A (A^T e = 0)
 
 ## Results (synthetic data, seed 20261106)
 
-The data are made up: a local grid in metres, a 3 cm-per-pixel image rotated 1.5 degrees, 2 cm of
+The data are made up: a local grid in meters, a 3 cm-per-pixel image rotated 1.5 degrees, 2 cm of
 survey error and half a pixel of picking error on each point. Nothing here is from an employer.
 
 | | |
@@ -37,7 +37,7 @@ survey error and half a pixel of picking error on each point. Nothing here is fr
 The held-back points are the honest number. The RMS that Pro reports is measured on the same
 points the fit was built from, so it will always look a little better than the fit really is.
 
-## Why centre the coordinates first
+## Why center the coordinates first
 
 Solving the normal equations means working with `A^T A`, and its condition number is the square
 of `A`'s. On raw pixel coordinates `cond(A)` is about 12,000 and `cond(A^T A)` about 150 million.

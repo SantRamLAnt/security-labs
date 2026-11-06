@@ -7,6 +7,7 @@ tree that is published, and fails if it reads anything identifier-shaped:
 
   * evidence/screens/*.png
   * every image embedded in docs/index.html (the public GitHub Pages site)
+  * every PNG under docs/img/ (images the site links to, added Nov 2026)
 
 It scans the current tree, not history. History is deliberately left intact;
 see finding 4 in audit/CIP-010-R1-evidence.md.
@@ -94,7 +95,9 @@ def find(text):
 
 
 def main(args):
-    targets = args or sorted(glob.glob("evidence/screens/*.png")) + (["docs/index.html"] if glob.os.path.exists("docs/index.html") else [])
+    targets = args or (sorted(glob.glob("evidence/screens/*.png"))
+                       + sorted(glob.glob("docs/img/**/*.png", recursive=True))
+                       + (["docs/index.html"] if glob.os.path.exists("docs/index.html") else []))
     items = [it for t in targets for it in images_from(t)]
     with ProcessPoolExecutor() as ex:
         results = list(ex.map(scan_one, items))

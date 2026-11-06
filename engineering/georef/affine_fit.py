@@ -17,7 +17,7 @@ equations than unknowns, so there's no exact solution, and 18.06's answer is the
     p = A x_hat                     the closest point to b in the column space of A
     e = b - p,   A^T e = 0          the error is perpendicular to every column of A
 
-The data are synthetic: a made-up local grid in metres, a 3 cm-per-pixel image rotated 1.5
+The data are synthetic: a made-up local grid in meters, a 3 cm-per-pixel image rotated 1.5
 degrees, control points with 2 cm survey error and half a pixel of picking error, and one
 deliberately mistyped point. Three extra check points are held back from the fit to measure
 how well it predicts points it never saw.
@@ -30,7 +30,7 @@ import sys
 import numpy as np
 
 SEED = 20261106
-GSD = 0.03            # metres per pixel
+GSD = 0.03            # meters per pixel
 ROT = math.radians(1.5)
 ORIGIN = (5000.0, 2000.0)
 
@@ -62,15 +62,15 @@ def make_points(rng):
     return np.array(gcp), np.array(gcp_blunder), np.array(chk)
 
 
-def design(pts, centre=None):
+def design(pts, center=None):
     c, r = pts[:, 0], pts[:, 1]
-    if centre is not None:
-        c, r = c - centre[0], r - centre[1]
+    if center is not None:
+        c, r = c - center[0], r - center[1]
     return np.column_stack([c, r, np.ones(len(pts))])
 
 
-def fit(pts, method="qr", centre=None):
-    A = design(pts, centre)
+def fit(pts, method="qr", center=None):
+    A = design(pts, center)
     out = []
     for b in (pts[:, 2], pts[:, 3]):
         if method == "normal":
@@ -84,8 +84,8 @@ def fit(pts, method="qr", centre=None):
     return out
 
 
-def residuals(pts, params, centre=None):
-    A = design(pts, centre)
+def residuals(pts, params, center=None):
+    A = design(pts, center)
     return np.column_stack([pts[:, 2] - A @ params[0], pts[:, 3] - A @ params[1]])
 
 
@@ -93,32 +93,32 @@ def rms(res):
     return float(math.sqrt(np.mean(np.sum(res**2, axis=1))))
 
 
-def leave_one_out(pts, centre):
+def leave_one_out(pts, center):
     """Refit without each point and see how far that point lands from the others' fit."""
     out = []
     for k in range(len(pts)):
         rest = np.delete(pts, k, axis=0)
-        prm = fit(rest, centre=centre)
-        out.append(float(np.linalg.norm(residuals(pts[k:k + 1], prm, centre)[0])))
+        prm = fit(rest, center=center)
+        out.append(float(np.linalg.norm(residuals(pts[k:k + 1], prm, center)[0])))
     return out
 
 
 def main():
     rng = np.random.default_rng(SEED)
     gcp, gcp_bad, chk = make_points(rng)
-    centre = gcp[:, :2].mean(axis=0)
+    center = gcp[:, :2].mean(axis=0)
     r = {}
 
-    p_qr = fit(gcp, "qr", centre)
-    p_ne = fit(gcp, "normal", centre)
-    p_ls = fit(gcp, "lstsq", centre)
+    p_qr = fit(gcp, "qr", center)
+    p_ne = fit(gcp, "normal", center)
+    p_ls = fit(gcp, "lstsq", center)
     r["agree"] = max(float(np.max(np.abs(p_qr[i] - p_ne[i]))) + float(np.max(np.abs(p_qr[i] - p_ls[i])))
                      for i in range(2))
-    res = residuals(gcp, p_qr, centre)
-    A = design(gcp, centre)
+    res = residuals(gcp, p_qr, center)
+    A = design(gcp, center)
     r["orth"] = float(np.max(np.abs(A.T @ res)))
     r["rms"] = rms(res)
-    r["check_rms"] = rms(residuals(chk, p_qr, centre))
+    r["check_rms"] = rms(residuals(chk, p_qr, center))
     a, b, _ = p_qr[0]
     r["gsd"] = math.hypot(a, b)
     r["rot"] = math.degrees(math.atan2(p_qr[1][0], a))
@@ -131,14 +131,14 @@ def main():
     r["cond_raw_ne"] = float(np.linalg.cond(raw.T @ raw))
     r["cond_ctr"] = float(np.linalg.cond(A))
 
-    p_bad = fit(gcp_bad, "qr", centre)
-    r["rms_bad"] = rms(residuals(gcp_bad, p_bad, centre))
-    loo = leave_one_out(gcp_bad, centre)
+    p_bad = fit(gcp_bad, "qr", center)
+    r["rms_bad"] = rms(residuals(gcp_bad, p_bad, center))
+    loo = leave_one_out(gcp_bad, center)
     r["loo_worst"] = int(np.argmax(loo)) + 1
     r["loo"] = loo
     r["loo_next"] = sorted(loo)[-2]
 
-    print("  Affine fit, 9 control points (synthetic), centred coordinates")
+    print("  Affine fit, 9 control points (synthetic), centered coordinates")
     print(f"    QR, normal equations and numpy lstsq agree to {r['agree']:.1e} (largest parameter difference)")
     print(f"    recovered pixel size {100 * r['gsd']:.3f} cm (true {100 * GSD:.3f}),"
           f" rotation {r['rot']:.3f} deg (true {math.degrees(ROT):.3f})")
@@ -146,10 +146,10 @@ def main():
     print(f"    RMS error on 3 held-back points  {100 * r['check_rms']:.1f} cm")
     print(f"    A^T e = 0 check: largest entry {r['orth']:.1e}")
     print(f"    projection matrix P: P^2 = P and P = P^T to {r['proj']:.1e}")
-    print("\n  Why centre the coordinates first")
+    print("\n  Why center the coordinates first")
     print(f"    cond(A) on raw pixel coordinates    {r['cond_raw']:.3e}")
     print(f"    cond(A^T A), what the normal equations solve  {r['cond_raw_ne']:.3e}  (the square)")
-    print(f"    cond(A) after centring              {r['cond_ctr']:.3e}")
+    print(f"    cond(A) after centering              {r['cond_ctr']:.3e}")
     print("\n  One mistyped control point (5 m in one easting)")
     print(f"    RMS error jumps from {100 * r['rms']:.1f} cm to {100 * r['rms_bad']:.1f} cm")
     print(f"    leave-one-out: point {r['loo_worst']} lands {r['loo'][r['loo_worst'] - 1]:.2f} m from the"

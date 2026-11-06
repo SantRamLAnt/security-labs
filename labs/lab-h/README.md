@@ -1,4 +1,4 @@
-# LAB H — Data Security Posture: Classification, Labelling and DLP
+# LAB H — Data Security Posture: Classification, Labeling and DLP
 Microsoft Purview · sensitivity labels · DLP · CIP-011 information protection
 Self-directed security lab · synthetic data only
 
@@ -18,7 +18,7 @@ Labs A through G produce a screenshot of a control working. This one produces a
 **classification scheme and a policy design**, because that is honestly what
 data security posture management is. The tooling is the easy half; deciding
 what data exists, who may see it, and what happens when it moves is the half
-that takes judgement — and it is the half seven years inside a utility actually
+that takes judgment — and it is the half seven years inside a utility actually
 qualifies you for.
 
 Do not inflate this into "I deployed enterprise DLP." Say: *I built the
@@ -46,7 +46,7 @@ a follow-up question.
 | **NERC CIP-004-7** | R4 Access Management for BCSI | Access column of the matrix |
 | **NIST SP 800-53 Rev 5** | RA-2 Security Categorization | The classification scheme itself |
 | | MP-4 Media Storage · MP-6 Media Sanitization | Retention and disposal |
-| | SC-28 Protection of Information at Rest | Encryption and labelling |
+| | SC-28 Protection of Information at Rest | Encryption and labeling |
 | | AC-4 Information Flow Enforcement | DLP egress rules |
 | | SI-12 Information Management and Retention | Retention |
 | **NIST CSF 2.0** | ID.AM-07 Data inventory · PR.DS-01/02 Data protected | Sections 2–4 |
@@ -57,7 +57,7 @@ a follow-up question.
 
 ## SECTION 1 — Cost and scope
 
-- Sensitivity labels and basic DLP need a Microsoft 365 / Purview licence that a
+- Sensitivity labels and basic DLP need a Microsoft 365 / Purview license that a
   personal tenant usually does not have. **Do not buy one for a lab.**
 - What you *can* do free: build the classification scheme, write the policy
   design, and implement the storage-side controls in Azure (encryption,
@@ -78,18 +78,18 @@ Four levels. Four is the number that gets used; six gets ignored.
 | **Public** | Released, or releasable, without harm | Outage map, rate schedules, published maps | Any | Unrestricted | Per records schedule |
 | **Internal** | Routine business; harm from disclosure is low | Work schedules, internal procedures, training material | Managed tenant | Internal only | 3 years default |
 | **Confidential** | Harm to customers or the business | Customer PII, premise and account records, vendor contracts | Encrypted, access-scoped | Named recipients; no external forwarding | Per regulation; disposal recorded |
-| **Restricted / BCSI** | Information about BES Cyber Systems whose exposure could enable a compromise | Network diagrams, asset inventories with addresses, system configurations, credentials, **GIS data joining asset location to criticality** | Encrypted, private network path, logged access | Need-to-know; authorised list; no third-party AI processing | CIP-011 R2 disposal evidence required |
+| **Restricted / BCSI** | Information about BES Cyber Systems whose exposure could enable a compromise | Network diagrams, asset inventories with addresses, system configurations, credentials, **GIS data joining asset location to criticality** | Encrypted, private network path, logged access | Need-to-know; authorized list; no third-party AI processing | CIP-011 R2 disposal evidence required |
 
 ### The row that matters
 
 **GIS data is where Confidential becomes Restricted, and it happens by join.**
 
-A gas main centreline alone is Internal. A pressure system identifier alone is
+A gas main centerline alone is Internal. A pressure system identifier alone is
 Internal. Joined, with regulator stations, criticality and address-level
 precision, the result describes how to cause harm — and that is the BCSI test:
 not what the attribute is called, but what the combination enables.
 
-This is the aggregation problem, it is poorly handled in most organisations
+This is the aggregation problem, it is poorly handled in most organizations
 because classification is applied per-field, and it is the point utility GIS work informs most directly.
 
 ---
@@ -98,15 +98,15 @@ because classification is applied per-field, and it is the point utility GIS wor
 
 | # | Policy | Condition | Action | Control |
 |---|---|---|---|---|
-| 1 | Default labelling | Any unlabelled document in a managed workspace | Apply `Internal` | ISO 27001 A.5.13 |
+| 1 | Default labeling | Any unlabeled document in a managed workspace | Apply `Internal` | ISO 27001 A.5.13 |
 | 2 | Automatic classification | Content matches account-number, SSN or address-plus-meter patterns | Recommend `Confidential` | NIST RA-2 |
 | 3 | External egress block | `Confidential` or `Restricted` sent outside the tenant | Block, with override + business justification for `Confidential`; hard block for `Restricted` | NIST AC-4, CIP-011 R1 |
 | 4 | Removable media | `Restricted` copied to USB or personal cloud storage | Block, alert security | NIST MP-4 |
-| 5 | **AI service egress** | Any labelled content pasted into or uploaded to a non-approved generative AI endpoint | Block `Confidential` and `Restricted`; warn on `Internal` | OWASP LLM02, NIST AC-4 |
+| 5 | **AI service egress** | Any labeled content pasted into or uploaded to a non-approved generative AI endpoint | Block `Confidential` and `Restricted`; warn on `Internal` | OWASP LLM02, NIST AC-4 |
 | 6 | Disposal | `Restricted` past retention | Documented destruction with evidence | CIP-011 R2 |
 
 **Policy 5 is the one to talk about.** It is the control that did not need to
-exist three years ago, it is the one every organisation is currently improvising,
+exist three years ago, it is the one every organization is currently improvising,
 and it is where this lab meets Lab F. The failure mode is not a hacker — it is a
 competent employee pasting an operational document into a chat window to get
 help faster. The control has to live at the egress boundary, because by the time
@@ -130,7 +130,7 @@ Four rules follow, and they are architectural, not prompt-level:
 2. **Index only at or below the lowest clearance of any user of that index.** A
    single index serving mixed audiences will leak, and no amount of prompt
    instruction fixes it. One index per audience is the control.
-3. **Authorise retrieval at the data layer, per requesting user** — not by
+3. **Authorize retrieval at the data layer, per requesting user** — not by
    asking the model to withhold. Lab G T4 says the same thing from the threat
    side; this is the data side of one control.
 4. **No Restricted/BCSI content reaches a third-party model endpoint.** For this

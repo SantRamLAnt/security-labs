@@ -45,11 +45,11 @@ granting."
 ## COST AND SAFETY
 
 - **Cost: $0.** RBAC, custom roles and assignment queries are free.
-- **PIM and Access Reviews need Entra ID P2.** Do not buy a licence for a lab.
+- **PIM and Access Reviews need Entra ID P2.** Do not buy a license for a lab.
   Step 5 covers how to answer the PIM question honestly without having run it,
   which is better than pretending.
 - **Scope: your own tenant.** Never enumerate an employer's directory. Reading
-  a corporate directory without authorisation is a security incident with your
+  a corporate directory without authorization is a security incident with your
   name on it, regardless of intent.
 
 ---
@@ -199,7 +199,7 @@ az cognitiveservices account show -n oai-seclab-lsr01 -g rg-seclab-ai
 az cognitiveservices account keys list -n oai-seclab-lsr01 -g rg-seclab-ai
 ```
 
-**EVIDENCE 3:** the authorisation failure. A denied action is a working control;
+**EVIDENCE 3:** the authorization failure. A denied action is a working control;
 a screenshot of a role definition is only an intention.
 
 ---
@@ -221,9 +221,9 @@ Two things to say about this set, both of which are the point:
 1. **Break-glass accounts are excluded from every policy above.** Two of them,
    cloud-only, long random passwords in a physical safe, monitored for any use.
    A Conditional Access policy with no exclusion is how a tenant locks its own
-   administrators out, and it has happened to real organisations.
+   administrators out, and it has happened to real organizations.
 2. **The risk-based policies require Entra ID P2.** The MFA and legacy-auth
-   policies do not. Knowing which controls your licence actually buys is part
+   policies do not. Knowing which controls your license actually buys is part
    of the job.
 
 **EVIDENCE 4:** the written policy set, with exclusions named. Implement the
@@ -237,9 +237,9 @@ Privileged Identity Management replaces standing privilege with eligible
 privilege: you hold no role until you activate it, for a bounded window, with
 justification, approval and an audit record.
 
-There is no P2 licence here, so it was not run. Stated plainly, with what was done instead:
+There is no P2 license here, so it was not run. Stated plainly, with what was done instead:
 
-> I haven't operated PIM — it needs P2 and I wasn't going to buy a licence for a
+> I haven't operated PIM — it needs P2 and I wasn't going to buy a license for a
 > lab. What I did was the problem underneath it: I pulled every role assignment
 > in my subscription, pulled thirty days of activity log to see which
 > permissions were actually exercised, and wrote a custom role from that
