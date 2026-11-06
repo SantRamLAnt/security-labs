@@ -82,9 +82,50 @@ study would use an AC load flow.
 The maths in this part: rank and nullity, solving linear systems, the transpose relationship
 between the current and voltage equations, Kirchhoff's laws and complex impedance.
 
+## Part 4: the node method, so a loop has an answer (`grid/nodal.py`)
+Part 3 stops at a closed loop, because the current law by itself can't say how current splits
+between two paths. The split depends on the impedance of each path. The node method from MIT
+6.002 (Lecture 3) handles it. Write the current law at every node, with each branch current as
+the voltage difference times the branch admittance, and the whole network becomes one system:
+
+`Y e = f`, with `Y = M diag(1/z) M^T`
+
+M is the same incidence matrix as part 3. MIT 18.06 (Lecture 12, Graphs, Networks, Incidence
+Matrices) writes the same thing as `A^T C A`, with the incidence matrix the other way round.
+The substation bus is held at its nominal voltage and every other node voltage is solved for.
+
+What it shows on `feeder-bad`, where the tie SW-12 is closed:
+
+| Phase A | Tie open (`feeder-normal`) | Tie closed (`feeder-bad`) |
+|---|---|---|
+| CB-101 | 158.0 A | 115.0 A |
+| CB-102 | 90.0 A | 133.0 A |
+| SW-12 (tie) | open | 43.0 A, flowing from F102 into F101 |
+
+(F102's FU-1022 lateral isn't in the bad fixture, which is why the total is 248 A, not 278.)
+With the tie closed, the two feeders share the load in inverse proportion to their path
+impedance. The R-1011 path is slightly longer, so F102 picks up 43 A of F101's load through
+the tie. That changes what each breaker sees, and a real study would go on to fault current and
+protection, which this model doesn't cover.
+
+How I know it's right:
+
+- On the radial feeder the node method reproduces part 3 exactly (158 A on CB-101 phase A,
+  1.61% drop), even though it solves the physics a different way.
+- The loop works out by hand. Treat the tie as a short and the two feeders are parallel paths
+  into one 248 A load, so it's a current divider: 248 x |z2| / (|z1| + |z2|) = 115.0 A.
+- Kirchhoff's voltage law holds around the loop. The loop itself comes from the null space of
+  the incidence matrix, which is how 18.06 describes loops, and z x i summed around it is
+  below 1e-14 V.
+- Dropping the reactance from the matrix on purpose fails 5 of the 9 tests in `test_nodal.py`.
+
+Same limits as part 3: a per-phase linear model with constant-current loads, no coupling between
+phases, and a screening calculation on a synthetic model. Switches and breakers with no impedance
+in the model get 0.001 ohm so the matrix can be inverted.
+
 ## Tests
 `run-tests.sh` pins an exact denial count per policy fixture (0 / 6 / 0 / 0 / 5), then runs the
-11 pinned matrix checks. A known-bad fixture that suddenly passes means a rule stopped
+11 pinned matrix checks and the 9 node-method checks. A known-bad fixture that suddenly passes means a rule stopped
 evaluating, which is the failure mode Lab E documents. Runs in GitHub Actions
 (`.github/workflows/lab-j.yml`) and as a third stage of the Harness pipeline
 (`.harness/security-gates.yaml`).

@@ -25,4 +25,9 @@ echo "  Lab J: the feeder as a matrix (grid/topology.py)"
 echo "  ------------------------------------------------"
 python3 grid/test_topology.py; t=$?
 for f in normal bad island; do echo; python3 grid/topology.py grid/feeder-$f.yaml; done
-exit $((fails + t))
+echo
+echo "  Lab J: the node method, loops included (grid/nodal.py)"
+echo "  -----------------------------------------------------"
+python3 grid/test_nodal.py; n=$?
+echo; python3 grid/nodal.py grid/feeder-bad.yaml
+exit $((fails + t + n))
