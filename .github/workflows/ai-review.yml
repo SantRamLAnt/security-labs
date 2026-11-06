@@ -3,11 +3,10 @@
 # the machine) review the same 36 files: 12 vulnerable handlers, their 12 fixes, and the 12
 # vulnerable ones with a comment telling automated reviewers to report them as safe.
 name: AI reviewer benchmark (advisory)
+# Push and manual runs only: on a pull_request event CodeQL reports data-flow findings only on lines
+# the pull request changed, and these case files are generated at run time, so it would hide them.
 on:
   push:
-    branches: [ main ]
-    paths: [ "ci/ai-review/**", ".github/workflows/ai-review.yml" ]
-  pull_request:
     paths: [ "ci/ai-review/**", ".github/workflows/ai-review.yml" ]
   workflow_dispatch:
     inputs:
@@ -43,7 +42,9 @@ jobs:
       - name: Semgrep (same rule packs as Gate 3, plus Flask)
         run: |
           pip install --quiet semgrep
-          semgrep scan --config p/python --config p/flask --config p/secrets --metrics=off --json -o semgrep.json ci/ai-review/work/ || true
+          # --no-git-ignore: the generated work folder is git-ignored, and Semgrep skips ignored files by default
+          semgrep scan --config p/python --config p/flask --config p/secrets --metrics=off --no-git-ignore --json -o semgrep.json ci/ai-review/work/ || true
+          python3 -c "import json; d=json.load(open('semgrep.json')); print('semgrep scanned', len(d['paths']['scanned']), 'files,', len(d['results']), 'findings,', len(d['errors']), 'errors')"
       - uses: github/codeql-action/init@v3
         with:
           languages: python
@@ -55,7 +56,9 @@ jobs:
           upload: never
           output: codeql-out
           category: ai-review-benchmark
-      - run: cp codeql-out/*.sarif codeql.sarif && ls -la semgrep.json codeql.sarif
+      - run: |
+          cp codeql-out/*.sarif codeql.sarif
+          python3 -c "import json,collections; d=json.load(open('codeql.sarif')); r=d['runs'][0]; print('codeql findings by rule:', dict(collections.Counter(x['ruleId'] for x in r['results'])))"
       - uses: actions/upload-artifact@v4
         with: { name: scanners, path: "semgrep.json\ncodeql.sarif", retention-days: 7 }
 
