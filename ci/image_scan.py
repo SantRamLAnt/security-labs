@@ -13,7 +13,7 @@ see finding 4 in audit/CIP-010-R1-evidence.md.
 
 usage:  python3 ci/image_scan.py [image-or-html ...]     exit 1 on any finding
 """
-import base64, io, os, re, sys, glob
+import base64, io, os, re, sys, glob, unicodedata
 # One tesseract thread per worker: OpenMP threads inside a process pool oversubscribe the CPU
 # and made this step take 15+ minutes on a CI runner.
 os.environ.setdefault("OMP_THREAD_LIMIT", "1")
@@ -24,8 +24,8 @@ import pytesseract
 # OCR misreads hex in monospace screenshots (7 -> "/", 1 -> "l", 0 -> "O", "Q" or "@"), so the GUID
 # pattern accepts those look-alikes and normalises them; a strict [0-9a-f] pattern
 # missed real GUIDs in testing. Found by the Gate 0 canary on its first run.
-H = r"[0-9a-fA-F/lIi|oOQ@sSzZ]"
-CONFUSABLE = str.maketrans({"/": "7", "l": "1", "I": "1", "i": "1", "|": "1", "o": "0", "O": "0", "Q": "0", "@": "0", "s": "5", "S": "5", "z": "2", "Z": "2"})
+H = r"[0-9a-fA-F/lIi|oOQ@sSzZ*]"
+CONFUSABLE = str.maketrans({"*": "f", "/": "7", "l": "1", "I": "1", "i": "1", "|": "1", "o": "0", "O": "0", "Q": "0", "@": "0", "s": "5", "S": "5", "z": "2", "Z": "2"})
 PATTERNS = {
     "guid":         rf"(?<![0-9A-Za-z]){H}{{7,10}}-{H}{{3,5}}-{H}{{3,5}}(?:-{H}{{3,5}}(?:-{H}{{6,13}})?)?",
     "public-ipv4":  r"\b(?!10\.|127\.|0\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
@@ -59,7 +59,12 @@ def ocr(img):
 def repair(text):
     """Undo the OCR errors measured on 120 rendered GUIDs (18% were missed before this):
     a 7 read as "/7" and a 1 read as "1l" (one character becomes two), and a space slipped in
-    beside a hyphen. The GUID pattern also allows each group to be one character long or short."""
+    beside a hyphen. The GUID pattern also allows each group to be one character long or short.
+
+    Added 6 Nov 2026 after ci/measure_redaction.py missed 2 of 300: OCR inserted an accented
+    letter ("b6ébe/982"), so accents are stripped first, and it read an f as "*", which is now a
+    look-alike for f."""
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
     text = re.sub(r"/(?=7)", "", text)
     text = re.sub(r"1l|l1", "1", text)
     text = re.sub(r"(?<=[0-9A-Za-z])[ \t]+-|-[ \t]+(?=[0-9A-Za-z])", "-", text)
