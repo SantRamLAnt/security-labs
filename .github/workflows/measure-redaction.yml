@@ -25,5 +25,5 @@ jobs:
       - name: Measure
         run: |
           set -o pipefail
-          python3 ci/measure_redaction.py "${{ inputs.n || 300 }}" --threads "${{ inputs.threads || 20 }}" | tee m.out
+          python3 -u ci/measure_redaction.py "${{ inputs.n || 300 }}" --threads "${{ inputs.threads || 20 }}" --limit 300 | tee m.out
           { echo '### Image redaction check measurement'; echo '```'; cat m.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

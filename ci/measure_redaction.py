@@ -17,7 +17,10 @@ machine runs workers x cores threads on cores cores.
 
 GUIDs come from a seeded generator so a run can be repeated exactly. None are real.
 
-usage: measure_redaction.py [N] [--threads M] [--seed S]
+Each thread setting runs in its own process with a time limit, so a setting that slows down
+badly is recorded as "over the limit" instead of hanging the run.
+
+usage: measure_redaction.py [N] [--threads M] [--repeats R] [--limit SECONDS] [--seed S]
 """
 import argparse
 import math
@@ -25,6 +28,7 @@ import os
 import random
 import re
 import statistics
+import subprocess
 import sys
 import time
 import uuid
@@ -98,11 +102,20 @@ def main():
     ap.add_argument("n", type=int, nargs="?", default=300)
     ap.add_argument("--threads", type=int, default=40, help="images for the thread benchmark")
     ap.add_argument("--repeats", type=int, default=3, help="timed runs per thread setting")
+    ap.add_argument("--limit", type=int, default=240, help="seconds allowed per timed run")
     ap.add_argument("--seed", type=int, default=20261105)
+    ap.add_argument("--bench-one", default=None, help=argparse.SUPPRESS)
     a = ap.parse_args()
     rng = random.Random(a.seed)
     guids = [str(uuid.UUID(int=rng.getrandbits(128), version=4)) for _ in range(a.n)]
     cores = os.cpu_count()
+    if a.bench_one is not None:
+        value = None if a.bench_one == "unset" else int(a.bench_one)
+        with ProcessPoolExecutor(max_workers=cores, initializer=set_threads, initargs=(value,)) as ex:
+            t0 = time.time()
+            list(ex.map(ocr_only, guids[:a.threads]))
+            print(f"{time.time() - t0:.3f}")
+        return
 
     print(f"Redaction check measurement  (seed {a.seed}, {cores} cores, "
           f"tesseract via pytesseract)\n")
@@ -126,19 +139,25 @@ def main():
     print(f"Part 2: OCR time for {len(m)} images, {cores} worker processes, "
           f"{a.repeats} timed runs per setting")
     base = None
-    for value in (1, 2, 4, None):
+    for value in ("1", "2", "4", "unset"):
         times = []
         for _ in range(a.repeats):
-            with ProcessPoolExecutor(max_workers=cores, initializer=set_threads,
-                                     initargs=(value,)) as ex:
-                t0 = time.time()
-                list(ex.map(ocr_only, m))
-                times.append(time.time() - t0)
-        med = statistics.median(times)
+            cmd = [sys.executable, os.path.abspath(__file__), str(a.n), "--threads", str(a.threads),
+                   "--seed", str(a.seed), "--bench-one", value]
+            try:
+                out = subprocess.run(cmd, capture_output=True, text=True, timeout=a.limit,
+                                     start_new_session=True)
+                times.append(float(out.stdout.strip().splitlines()[-1]))
+            except subprocess.TimeoutExpired:
+                os.system("pkill -9 tesseract >/dev/null 2>&1")
+                times.append(float("inf"))
+        finite = [t for t in times if t != float("inf")]
+        med = statistics.median(times) if len(finite) * 2 > len(times) else float("inf")
         base = base or med
-        label = "unset (default)" if value is None else str(value)
-        runs = ", ".join(f"{t:.1f}" for t in times)
-        print(f"  OMP_THREAD_LIMIT={label:15s} median {med:7.1f} s  ({med / base:6.1f}x)   runs: {runs}")
+        runs = ", ".join("over limit" if t == float("inf") else f"{t:.1f}" for t in times)
+        shown = f"over {a.limit} s" if med == float("inf") else f"{med:7.1f} s"
+        ratio = "" if med == float("inf") else f"({med / base:6.1f}x)"
+        print(f"  OMP_THREAD_LIMIT={value:6s} median {shown:>11s} {ratio:9s}  runs: {runs}", flush=True)
 
 if __name__ == "__main__":
     main()
