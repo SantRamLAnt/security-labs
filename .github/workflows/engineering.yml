@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install --quiet numpy
+      - run: pip install --quiet numpy scikit-learn
       - name: Fit and checks
         run: |
           set -o pipefail
@@ -28,6 +28,26 @@ jobs:
           set -o pipefail
           python3 engineering/calculus/distributed_load.py --check | tee c.out
           { echo '### Distributed load as a Riemann sum (MIT 18.01)'; echo '```'; cat c.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: PCA on daily load profiles
+        run: |
+          set -o pipefail
+          python3 engineering/pca/load_profiles.py --check | tee p.out
+          { echo '### PCA on daily load profiles (Imperial, DeepLearning.AI, Michigan)'; echo '```'; cat p.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Logistic regression and one hidden layer
+        run: |
+          set -o pipefail
+          python3 engineering/classifier/material_model.py --check | tee n.out
+          { echo '### Logistic regression and a hidden layer (DeepLearning.AI, Michigan)'; echo '```'; cat n.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Economic dispatch and Newton-Raphson power flow
+        run: |
+          set -o pipefail
+          python3 engineering/optimization/dispatch_and_power_flow.py --check | tee o.out
+          { echo '### Economic dispatch and power flow (KAIST, Imperial)'; echo '```'; cat o.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Interpreter and type checker
+        run: |
+          set -o pipefail
+          python3 engineering/languages/tiny_lang.py --check | tee l.out
+          { echo '### A small typed language (KAIST Programming Languages I and II)'; echo '```'; cat l.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Memory hierarchy measurement (not a pass/fail check)
         run: |
           set -o pipefail
