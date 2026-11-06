@@ -13,9 +13,9 @@ and Python's own overhead stays small:
      per read climbs in steps as the array outgrows each cache level.
   2. Stride sweep. Sum every k-th value of a 256 MiB array. Memory moves in 64-byte cache lines
      (8 float64 values), so up to a stride of 8 each step wastes more of every line fetched. The
-     simple cache-line model says the time per value should level off after that. On the machines
-     I've tried it keeps rising, which points at the prefetcher and memory pages as well. I
-     haven't separated those effects.
+     simple cache-line model says the time per value should level off after that. On GitHub's
+     AMD EPYC runner it leveled off from a stride of 16; on an Intel Xeon it kept rising. I
+     haven't worked out why the two differ.
 
 These are throughput numbers. Independent reads overlap in the processor, so they understate
 the latency of a single miss; a pointer-chasing test would measure that directly.

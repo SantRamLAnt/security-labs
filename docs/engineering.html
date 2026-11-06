@@ -104,7 +104,7 @@ figure.small img{max-width:820px}
   <div class="wrap">
     <p class="kick">Luis Antonio Santiago-Ramirez &middot; Springfield, Massachusetts</p>
     <h1>The engineering under the security labs</h1>
-    <p class="sub">This year I built ten cloud security labs. This page pulls out the math and computer engineering inside them. It also has a least-squares project from my GIS work and the coursework I'm doing next.</p>
+    <p class="sub">This year I built ten cloud security labs. This page pulls out the math and computer engineering inside them. It also has projects built on MIT OpenCourseWare lectures, and the coursework I'm doing next.</p>
     <div class="links">
       <a href="./" target="_blank" rel="noopener">Security portfolio</a>
       <a href="https://github.com/SantRamLAnt/security-labs" target="_blank" rel="noopener">Source on GitHub</a>
@@ -312,7 +312,22 @@ figure.small img{max-width:820px}
       <a href="img/engineering/threads-fresh-seed.png" target="_blank" rel="noopener"><img src="img/engineering/threads-fresh-seed.png" alt="Thread timings from the second run: 2.8 s, 6.0 s, then over 300 s" loading="lazy"></a>
       <figcaption>The second run, one timed run per setting. Same cliff. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42158983727" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
     </figure>
-    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/ci/measure_redaction.py" target="_blank" rel="noopener">ci/measure_redaction.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42155477690" target="_blank" rel="noopener">run</a></p>
+    <h3>The memory hierarchy</h3>
+    <p>The chapter on caches in MIT 6.004 explains the other half of why code can be slow. A processor keeps recently used memory in small, fast caches, and reading past them costs more. I measured that on the same kind of runner, timing random reads from arrays of different sizes.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Array size</th><th class="num">Time per read</th></tr>
+        <tr><td class="k">16 KiB to 4 MiB</td><td class="num">0.9 to 1.5 ns</td></tr>
+        <tr><td class="k">16 MiB</td><td class="num">4.6 ns</td></tr>
+        <tr><td class="k">64 MiB to 512 MiB</td><td class="num">8.1 to 8.6 ns</td></tr>
+      </table>
+    </div>
+    <p>The runner&#8217;s L3 cache is 32 MiB, and the big step comes once the array is past it and most reads go to main memory. A stride test came out less tidy. The simple cache-line model says the time per value should level off past a stride of 8 values, one 64-byte line. On the runner it leveled off from 16, and on an Intel Xeon it kept climbing. I don&#8217;t know yet why the two differ. These are also throughput numbers, so they understate how long a single miss takes.</p>
+    <figure>
+      <a href="img/engineering/caches-run.png" target="_blank" rel="noopener"><img src="img/engineering/caches-run.png" alt="GitHub Actions output: random-read times by array size and strided-read times, with the runner's cache sizes" loading="lazy"></a>
+      <figcaption>The memory measurement on GitHub&#8217;s runner, with the cache sizes it reported. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42283212544" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
+    </figure>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/ci/measure_redaction.py" target="_blank" rel="noopener">ci/measure_redaction.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/caches/memory_hierarchy.py" target="_blank" rel="noopener">memory_hierarchy.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42155477690" target="_blank" rel="noopener">run</a></p>
   </div>
 </section>
 
@@ -340,9 +355,34 @@ figure.small img{max-width:820px}
   </div>
 </section>
 
+<section id="calculus">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">06</span> &nbsp;Calculus &middot; a spread-out load</p>
+    <h2>Half the drop, a third of the losses</h2>
+    <p>Distribution engineering has a rule of thumb: if a lateral&#8217;s load is spread evenly along it instead of sitting at the far end, the voltage drop is about half and the losses about a third. Both numbers are integrals, and the Riemann sums session of MIT 18.01 (Session 46) is a good way to see where they come from.</p>
+    <p>Split the load into N equal pieces along N equal sections. Each section carries every piece past it, so the drop is a sum of N rectangles under the line 1 &minus; x, and the losses a sum under (1 &minus; x)<sup>2</sup>. As N grows, the sums close in on the integrals.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Sections (N)</th><th class="num">Drop vs all load at the end</th><th class="num">Losses vs all load at the end</th></tr>
+        <tr><td class="k">1</td><td class="num">1.000</td><td class="num">1.000</td></tr>
+        <tr><td class="k">10</td><td class="num">0.550</td><td class="num">0.385</td></tr>
+        <tr><td class="k">100</td><td class="num">0.505</td><td class="num">0.338</td></tr>
+        <tr><td class="k">1,000</td><td class="num">0.5005</td><td class="num">0.3338</td></tr>
+        <tr><td class="k">the integral</td><td class="num">1/2</td><td class="num">1/3</td></tr>
+      </table>
+    </div>
+    <p>The drop&#8217;s error is exactly 1/(2N), so ten times as many sections cuts it by ten. The script works out each sum three ways, term by term with exact fractions, in closed form, and by solving Kirchhoff&#8217;s current law as a matrix the way Lab J does, and all three agree. With synthetic numbers, 60 A on a lateral with 0.9 &#937; of resistance, the drop goes from 54 V to 27 V and the losses from 3.24 kW to 1.08 kW.</p>
+    <figure>
+      <a href="img/engineering/calculus-run.png" target="_blank" rel="noopener"><img src="img/engineering/calculus-run.png" alt="GitHub Actions output: drop and loss ratios converging to one half and one third as N grows" loading="lazy"></a>
+      <figcaption>The Riemann-sum check as it ran on GitHub. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42283212544" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
+    </figure>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/calculus/distributed_load.py" target="_blank" rel="noopener">engineering/calculus/distributed_load.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/calculus/README.md" target="_blank" rel="noopener">write-up</a></p>
+  </div>
+</section>
+
 <section id="study">
   <div class="wrap">
-    <p class="eyebrow"><span class="n">06</span> &nbsp;Coursework</p>
+    <p class="eyebrow"><span class="n">07</span> &nbsp;Coursework</p>
     <h2>What I'm studying, and where it shows up</h2>
     <p>From my degree I have Elementary Statistics, Quantitative Methods for the Social and Physical Sciences, and Data Collection and Analysis. I don't have calculus, linear algebra, digital logic or circuits from a classroom, so this is the plan to fill them in. I started in November 2026, and I'll mark each one complete only when it is.</p>
     <div class="tablewrap wide">
@@ -353,6 +393,8 @@ figure.small img{max-width:820px}
         <tr><td class="k">Digital logic, computer architecture</td><td><a href="https://www.coursera.org/learn/nand2tetris1" target="_blank" rel="noopener">From Nand to Tetris, Part I</a> (Hebrew University)</td><td><span class="tag next">Next</span></td><td>Sections 04 and the SHA-256 work</td></tr>
         <tr><td class="k">Machine learning</td><td><a href="https://www.coursera.org/specializations/dartmouth-practical-machine-learning" target="_blank" rel="noopener">Practical Machine Learning: Foundations to Neural Networks</a> (Dartmouth)</td><td><span class="tag next">Next</span></td><td>Lab F, and the confusion matrix in section 02</td></tr>
         <tr><td class="k">Analog circuits</td><td><a href="https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" target="_blank" rel="noopener">6.002 Circuits and Electronics</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Next</span></td><td>Section 01: Kirchhoff's laws and the node method</td></tr>
+        <tr><td class="k">Calculus</td><td><a href="https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010/" target="_blank" rel="noopener">18.01SC Single Variable Calculus</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Alongside</span></td><td>Section 06</td></tr>
+        <tr><td class="k">Computer architecture</td><td><a href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/" target="_blank" rel="noopener">6.004 Computation Structures</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Alongside</span></td><td>Section 04</td></tr>
         <tr><td class="k">Depth in linear algebra and probability</td><td><a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/" target="_blank" rel="noopener">18.06SC Linear Algebra</a> and <a href="https://ocw.mit.edu/courses/18-05-introduction-to-probability-and-statistics-spring-2022/" target="_blank" rel="noopener">18.05 Probability and Statistics</a> (MIT OpenCourseWare)</td><td><span class="tag next">Alongside</span></td><td>Sections 01, 02 and 05</td></tr>
       </table>
     </div>
