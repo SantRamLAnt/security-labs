@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc  # v1.14.0, pinned to a commit (CodeQL actions/unpinned-tag)
         with:
           cluster_name: lab-d
 
