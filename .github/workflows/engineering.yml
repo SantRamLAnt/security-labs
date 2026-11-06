@@ -1,5 +1,5 @@
 # Engineering notes: offline maths checks. No credentials, no cloud resources.
-name: Engineering · least-squares georeferencing
+name: Engineering · math and architecture checks
 on:
   push:
     branches: [ main ]
@@ -11,7 +11,7 @@ permissions:
   contents: read
 jobs:
   georef:
-    name: "Affine fit checks"
+    name: "Engineering checks"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,3 +23,13 @@ jobs:
           set -o pipefail
           python3 engineering/georef/affine_fit.py --check | tee g.out
           { echo '### Least-squares georeferencing'; echo '```'; cat g.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Distributed load as a Riemann sum
+        run: |
+          set -o pipefail
+          python3 engineering/calculus/distributed_load.py --check | tee c.out
+          { echo '### Distributed load as a Riemann sum (MIT 18.01)'; echo '```'; cat c.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Memory hierarchy measurement (not a pass/fail check)
+        run: |
+          set -o pipefail
+          python3 engineering/caches/memory_hierarchy.py | tee m.out
+          { echo '### Memory hierarchy (MIT 6.004, Chapter 14)'; echo '```'; cat m.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
