@@ -6,7 +6,6 @@
 name: CodeQL
 on:
   push:
-    branches: [ main ]
   pull_request:
   schedule:
     - cron: "17 6 * * 1"
@@ -39,3 +38,27 @@ jobs:
       - uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
+          output: codeql-out
+      - name: List findings in the run summary
+        if: always()
+        run: |
+          python3 - <<'PY' | tee findings.txt
+          import glob, json, collections
+          rows = []
+          for f in glob.glob("codeql-out/*.sarif"):
+              run = json.load(open(f))["runs"][0]
+              rules = {r["id"]: r for r in run["tool"]["driver"].get("rules", [])}
+              for ext in run["tool"].get("extensions", []):
+                  rules.update({r["id"]: r for r in ext.get("rules", [])})
+              for r in run["results"]:
+                  loc = r["locations"][0]["physicalLocation"]
+                  sev = rules.get(r["ruleId"], {}).get("properties", {}).get("security-severity", "-")
+                  rows.append((r["ruleId"], sev, f'{loc["artifactLocation"]["uri"]}:{loc.get("region", {}).get("startLine", "?")}'))
+          print(f"{len(rows)} findings")
+          for rule, n in collections.Counter(r[0] for r in rows).most_common():
+              print(f"  {n:3d}  {rule}")
+          print()
+          for row in sorted(rows):
+              print(f"  {row[0]:<45s} severity {row[1]:<5s} {row[2]}")
+          PY
+          { echo '### CodeQL (${{ matrix.language }})'; echo '```'; cat findings.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
