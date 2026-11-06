@@ -210,8 +210,18 @@ footer p{color:var(--ink-3);max-width:none;margin:0 0 6px}
     <p class="eyebrow"><span class="n">03</span> &nbsp;Measurement &middot; the redaction check</p>
     <h2>Measuring my own redaction check</h2>
     <p>After I found test IDs in two published screenshots, I added a CI check that reads every published image with OCR and fails on anything shaped like an identifier. One canary image proves it runs. It doesn't say how often it misses.</p>
-    <!-- MEASUREMENT -->
-    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/ci/measure_redaction.py" target="_blank" rel="noopener">ci/measure_redaction.py</a> &middot; run: <!-- RUNLINK --></p>
+    <p>So I wrote a script that renders 300 screenshots, each with a new random ID, in the same layout as the canary. It reads each one once with OCR and scores the text three ways: the check as I first committed it, today&#8217;s pattern on the raw text, and today&#8217;s pattern after the repair step that undoes known misreads. All three use the same OCR output, so the logic is the only difference.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Version of the check</th><th class="num">Caught</th><th class="num">Missed</th><th class="num">95% upper bound on the miss rate</th></tr>
+        <tr><td class="k">as first committed</td><td class="num">254 / 300</td><td class="num">15.3%</td><td class="num">19.2%</td></tr>
+        <tr><td class="k">current pattern, raw text</td><td class="num">294 / 300</td><td class="num">2.0%</td><td class="num">3.9%</td></tr>
+        <tr><td class="k">current pattern + repair</td><td class="num">298 / 300</td><td class="num">0.7%</td><td class="num">2.1%</td></tr>
+      </table>
+    </div>
+    <p>Until this run I had been saying the check caught 300 of 300. That was a smaller test on a different sample, and this one missed two. Both were misreads I hadn&#8217;t seen before: OCR read an f as an asterisk, and it put an accented &#233; into the middle of an ID. I fixed both, then measured again on 300 IDs from a new seed, so the fix was tested on IDs it had never seen. It caught <strong>300 of 300</strong>, which puts the 95% upper bound on the miss rate at 0.99%.</p>
+    <p>That bound is the same arithmetic as section 02. Zero misses in a sample isn&#8217;t a zero miss rate, and the sample size decides how small a rate you can rule out.</p>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/ci/measure_redaction.py" target="_blank" rel="noopener">ci/measure_redaction.py</a> &middot; runs: <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42155477690" target="_blank" rel="noopener">first measurement</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42158983727" target="_blank" rel="noopener">after the fix, new seed</a></p>
   </div>
 </section>
 
@@ -219,7 +229,20 @@ footer p{color:var(--ink-3);max-width:none;margin:0 0 6px}
   <div class="wrap">
     <p class="eyebrow"><span class="n">04</span> &nbsp;Computer architecture</p>
     <h2>Threads, cores and a fifteen-minute CI step</h2>
-    <!-- THREADS -->
+    <p>The redaction check used to take about 15 minutes in CI. The cause was threads. The check runs one OCR worker process per CPU core, and Tesseract, the OCR engine, starts its own OpenMP threads inside each worker, by default one per core. On a 4-core runner that&#8217;s 16 threads competing for 4 cores. The likely reason it gets so much worse than four times slower is that OpenMP threads waiting on each other spin for a while instead of sleeping, so they burn the CPU time the busy threads need.</p>
+    <p>I timed the same 20 images with the thread limit set four ways, three runs each, on the same kind of 4-core runner the gates use, with a five-minute cap per run.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>OCR threads per worker</th><th class="num">Median time</th><th class="num">vs 1 thread</th><th class="num">The three runs</th></tr>
+        <tr><td class="k">1</td><td class="num">3.7 s</td><td class="num">1.0&times;</td><td class="num">3.7, 3.7, 3.6</td></tr>
+        <tr><td class="k">2</td><td class="num">6.7 s</td><td class="num">1.8&times;</td><td class="num">6.9, 6.5, 6.7</td></tr>
+        <tr><td class="k">4</td><td class="num">over 300 s</td><td class="num">over 80&times;</td><td class="num">none finished</td></tr>
+        <tr><td class="k">unset (the default)</td><td class="num">over 300 s</td><td class="num">over 80&times;</td><td class="num">none finished</td></tr>
+      </table>
+    </div>
+    <p>A second run on a fresh runner showed the same cliff: 2.8 seconds, 6.0 seconds, then over 300 for both four threads and the default. On a 2-core machine the cliff came at two threads per worker instead: 1.7 seconds with one thread, over 40 seconds with two. So it seems to appear once each worker starts as many threads as the machine has cores. Two machines aren&#8217;t enough to call that a rule.</p>
+    <p>The fix is one line, <code>OMP_THREAD_LIMIT=1</code>, set before the workers start, and the CI step went from about 15 minutes to 44 seconds. I made that fix before measuring anything, and this table came afterwards. How threads get scheduled on cores is something I expect Nand to Tetris and a computer architecture course to cover in more depth.</p>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/ci/measure_redaction.py" target="_blank" rel="noopener">ci/measure_redaction.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42155477690" target="_blank" rel="noopener">run</a></p>
   </div>
 </section>
 

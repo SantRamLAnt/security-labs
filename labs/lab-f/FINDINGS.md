@@ -206,8 +206,8 @@ Two caveats. The ten trials are ten different attacks, so they aren't identical 
 the interval treats them as if they were. And the model isn't deterministic, so the same
 attack can go differently a second time. The better experiment is to repeat each attack many
 times per configuration. Ruling out a 5% leak rate with zero leaks takes 59 clean runs, and
-ruling out 1% takes 299. It's the same arithmetic as the redaction checker in portfolio
-finding 4: 300 catches out of 300 is what it takes to say the miss rate is under 1%.
+ruling out 1% takes 299. It's the same arithmetic I used on the portfolio's redaction checker,
+which caught 300 of 300 fresh test IDs: that's what it takes to say its miss rate is under 1%.
 
 ---
 
