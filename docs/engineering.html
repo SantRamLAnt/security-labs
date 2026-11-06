@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Engineering Notes · Luis Santiago-Ramirez</title>
+<meta name="description" content="The linear algebra, circuits, statistics and computer engineering inside Luis Santiago-Ramirez's security labs, and the coursework he is doing next.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#07090A; --bg-2:#0D1114; --bg-3:#12181C;
+  --ink:#E9EEF0; --ink-2:#97A3A8; --ink-3:#5E6B71;
+  --rule:#1A2227; --rule-2:#27333A;
+  --cy:#2FD4C4; --cy-dim:#0E6F67;
+  --red:#E5484D; --amb:#E8A33D; --grn:#3DD68C;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--display);
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:980px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{text-wrap:balance;margin:0}
+h1{font-weight:700;font-size:clamp(36px,6.4vw,68px);line-height:1.02;letter-spacing:-0.035em}
+h2{font-weight:600;font-size:clamp(25px,3.6vw,36px);line-height:1.12;letter-spacing:-0.025em;margin-bottom:20px}
+h3{font-weight:600;font-size:19px;line-height:1.3;margin:30px 0 10px}
+p{margin:0 0 17px;max-width:68ch;color:var(--ink-2)}
+p strong,li strong{color:var(--ink);font-weight:600}
+ul{padding-left:20px;margin:0 0 17px;max-width:68ch;color:var(--ink-2)}
+li{margin-bottom:6px}
+a{color:var(--cy);text-decoration:none;border-bottom:1px solid rgba(47,212,196,.3)}
+a:hover{border-bottom-color:var(--cy)}
+a:focus-visible{outline:2px solid var(--cy);outline-offset:3px;border-radius:2px}
+code{font-family:var(--mono);font-size:.86em;background:var(--bg-3);border:1px solid var(--rule-2);
+  border-radius:3px;padding:1px 5px;color:var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--cy);margin:0 0 14px}
+.eyebrow .n{color:var(--ink-3)}
+section{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--rule)}
+.hero{padding-block:clamp(48px,8vw,90px) clamp(34px,5vw,54px)}
+.kick{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);margin:0 0 24px}
+.sub{font-size:clamp(18px,2.4vw,22px);line-height:1.45;color:var(--ink-2);max-width:46ch;margin:22px 0 0}
+.links{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:26px;font-family:var(--mono);font-size:13px}
+.honest{border:1px solid var(--rule-2);border-left:3px solid var(--cy);background:var(--bg-3);
+  padding:20px 22px;margin-top:34px;border-radius:3px;max-width:76ch}
+.honest .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--cy);display:block;margin-bottom:8px;font-weight:700}
+.honest p{margin:0 0 8px;font-size:15.5px;max-width:none}
+.honest p:last-child{margin:0}
+.tablewrap{overflow-x:auto;margin:22px 0 26px;border:1px solid var(--rule);border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);background:var(--bg-3);padding:10px 13px;font-weight:500;border-bottom:1px solid var(--rule-2)}
+td{padding:10px 13px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2)}
+tr:last-child td{border-bottom:0}
+td.k{color:var(--ink);font-weight:500;white-space:nowrap}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wide table{min-width:640px}
+.matrix{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin:22px 0 10px}
+.mx{border:1px solid var(--rule);border-radius:3px;background:var(--bg-2);padding:14px 14px 10px;overflow-x:auto}
+.mx .cap{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+.mx table{font-family:var(--mono);font-size:12.5px;min-width:0;width:auto}
+.mx th,.mx td{padding:4px 8px;border:0;text-align:center;background:none}
+.mx th{font-size:9.5px;letter-spacing:.04em;color:var(--ink-3)}
+.mx th.row{text-align:right;padding-right:12px}
+.mx td.p{color:var(--grn)} .mx td.m{color:var(--red)} .mx td.z{color:#2c383e}
+.mx .note{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-top:8px}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:3px 8px;border-radius:3px;white-space:nowrap;font-weight:700}
+.tag.done{background:rgba(61,214,140,.12);color:var(--grn);border:1px solid rgba(61,214,140,.3)}
+.tag.now{background:rgba(47,212,196,.10);color:var(--cy);border:1px solid rgba(47,212,196,.32)}
+.tag.next{background:rgba(232,163,61,.12);color:var(--amb);border:1px solid rgba(232,163,61,.3)}
+.src{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:-6px}
+footer{border-top:1px solid var(--rule);padding-block:34px 48px;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+footer p{color:var(--ink-3);max-width:none;margin:0 0 6px}
+@media (max-width:640px){
+  .wide table{min-width:0}
+  .wide tr:first-child{display:none}
+  .wide tr{display:block;padding:12px 14px;border-bottom:1px solid var(--rule)}
+  .wide tr:last-child{border-bottom:0}
+  .wide td{display:block;border:0;padding:2px 0;text-align:left}
+  .wide td.k{white-space:normal;font-size:15.5px;margin-bottom:4px}
+  .wide td.num::before{content:"Policy denials: ";font-family:var(--display);color:var(--ink-3)}
+}
+@media print{
+  :root{--bg:#fff;--bg-2:#fff;--bg-3:#f4f6f7;--ink:#111;--ink-2:#333;--ink-3:#666;--rule:#ddd;--rule-2:#ccc;--cy:#0b6e66}
+  section{padding-block:22px;break-inside:auto} .hero{padding-block:10px 16px}
+  .mx td.z{color:#bbb}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="kick">Luis Antonio Santiago-Ramirez &middot; Springfield, Massachusetts</p>
+    <h1>The engineering under the security labs</h1>
+    <p class="sub">This year I built ten cloud security labs. This page pulls out the math and computer engineering inside them, and lists the coursework I'm doing next.</p>
+    <div class="links">
+      <a href="./" target="_blank" rel="noopener">Security portfolio</a>
+      <a href="https://github.com/SantRamLAnt/security-labs" target="_blank" rel="noopener">Source on GitHub</a>
+      <a href="https://www.linkedin.com/in/luis-antonio-santiago-ramirez" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+    <div class="honest">
+      <span class="lbl">How this was made</span>
+      <p>I've worked in utility GIS since 2019, first in water and sewer and now in gas distribution. My degree is in Regional Planning, so most of the math here is work I've done on my own.</p>
+      <p>I built these labs with an AI assistant writing much of the code. I chose what to test and what counts as evidence, and I decide when a result can't be trusted. Every number on this page comes from a script in the repository, and each section links to it.</p>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="matrix">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">01</span> &nbsp;Linear algebra and circuits &middot; Lab J</p>
+    <h2>A distribution feeder written as a matrix</h2>
+    <p>Lab J keeps a synthetic model of two 13.8 kV feeders as a file, and policy rules refuse a bad edit in CI. Those rules look at one device and the device above it. That catches a fuse rated higher than its recloser, but it can't see the shape of the whole network.</p>
+    <p>So I wrote each phase as an incidence matrix. Every row is a node: the substation bus, or the far end of a device. Every column is a closed device, with &minus;1 where it starts and +1 where it ends. Here is phase A, as designed and after one record mistake.</p>
+
+    <div class="matrix">
+      <div class="mx">
+        <div class="cap">feeder-normal &middot; phase A</div>
+        <table>
+          <tr><th></th><th>CB-101</th><th>R-1011</th><th>FU-1012</th><th>CB-102</th><th>R-1021</th></tr>
+          <tr><th class="row">SUB</th><td class="m">&minus;1</td><td class="z">0</td><td class="z">0</td><td class="m">&minus;1</td><td class="z">0</td></tr>
+          <tr><th class="row">CB-101</th><td class="p">1</td><td class="m">&minus;1</td><td class="z">0</td><td class="z">0</td><td class="z">0</td></tr>
+          <tr><th class="row">R-1011</th><td class="z">0</td><td class="p">1</td><td class="m">&minus;1</td><td class="z">0</td><td class="z">0</td></tr>
+          <tr><th class="row">FU-1012</th><td class="z">0</td><td class="z">0</td><td class="p">1</td><td class="z">0</td><td class="z">0</td></tr>
+          <tr><th class="row">CB-102</th><td class="z">0</td><td class="z">0</td><td class="z">0</td><td class="p">1</td><td class="m">&minus;1</td></tr>
+          <tr><th class="row">R-1021</th><td class="z">0</td><td class="z">0</td><td class="z">0</td><td class="z">0</td><td class="p">1</td></tr>
+        </table>
+        <div class="note">6 nodes, 5 edges, rank 5 &rarr; islands 0, loops 0</div>
+      </div>
+      <div class="mx">
+        <div class="cap">feeder-island &middot; R-1011 recorded open</div>
+        <table>
+          <tr><th></th><th>CB-101</th><th>FU-1012</th><th>CB-102</th><th>R-1021</th></tr>
+          <tr><th class="row">SUB</th><td class="m">&minus;1</td><td class="z">0</td><td class="m">&minus;1</td><td class="z">0</td></tr>
+          <tr><th class="row">CB-101</th><td class="p">1</td><td class="z">0</td><td class="z">0</td><td class="z">0</td></tr>
+          <tr><th class="row">R-1011</th><td class="z">0</td><td class="m">&minus;1</td><td class="z">0</td><td class="z">0</td></tr>
+          <tr><th class="row">FU-1012</th><td class="z">0</td><td class="p">1</td><td class="z">0</td><td class="z">0</td></tr>
+          <tr><th class="row">CB-102</th><td class="z">0</td><td class="z">0</td><td class="p">1</td><td class="m">&minus;1</td></tr>
+          <tr><th class="row">R-1021</th><td class="z">0</td><td class="z">0</td><td class="z">0</td><td class="p">1</td></tr>
+        </table>
+        <div class="note">6 nodes, 4 edges, rank 4 &rarr; islands 1, loops 0</div>
+      </div>
+    </div>
+
+    <p>Two numbers come out of the rank. <strong>Islands = nodes &minus; rank &minus; 1</strong> counts pieces of the feeder with no path back to the substation. <strong>Loops = edges &minus; rank</strong> counts closed loops, and a radial feeder has none. Once the R-1011 column is gone, nothing connects R-1011 and FU-1012 to the rest of the matrix. That shows up as one island.</p>
+    <p>When a phase is radial, the matrix with the substation row taken out is square and invertible. Kirchhoff's laws then become two linear solves. The current law <code>A<sub>r</sub>&thinsp;i = d</code> gives the current in every section from the loads. The voltage law <code>A<sub>r</sub><sup>T</sup>&thinsp;v = z&middot;i</code> gives the voltage drop at every node from the section impedances.</p>
+
+    <div class="tablewrap wide">
+      <table>
+        <tr><th>Fixture</th><th>What changed</th><th class="num">Policy denials</th><th>What the matrix shows</th></tr>
+        <tr><td class="k">feeder-normal</td><td>Nothing</td><td class="num">0</td><td>Radial on all three phases. CB-101 carries 158, 142 and 120 A on phases A, B and C, at most 26% of its rating. Largest voltage drop 1.61%, at the end of the FU-1012 lateral.</td></tr>
+        <tr><td class="k">feeder-bad</td><td>Five errors</td><td class="num">6</td><td>A loop on every phase from the closed tie switch. FU-1013 is cut off on phase B because it hangs from an A-phase lateral.</td></tr>
+        <tr><td class="k">feeder-island</td><td>R-1011 recorded open after maintenance</td><td class="num">0</td><td>R-1011's load point and the lateral below it have no path to the substation, on all three phases.</td></tr>
+      </table>
+    </div>
+    <p>The island case is why I built this. It's an ordinary record mistake, it passes every policy rule, and the matrix catches it straight away.</p>
+
+    <h3>Checking the math</h3>
+    <ul>
+      <li>The rank and a plain graph search have to agree on whether there are islands, or the run fails.</li>
+      <li>The matrix currents are compared against a walk down the tree that adds up the loads below each device. By hand, CB-101 on phase A is 120 + 38 = 158 A. The voltage drop at FU-1012 works out to about 1.61%.</li>
+      <li>I broke the matrix on purpose by dropping the &minus;1 from every column, and 4 of the 11 tests failed.</li>
+    </ul>
+    <p>My first version had a bug. On phase C of the island fixture nothing below R-1011 carries phase C, so its node never made it into the graph. Its 120 A load disappeared and phase C came back "radial". A missing load looked exactly like a clean result. Every device's load point is now a node whether the device is open or closed, and a test pins it.</p>
+    <p>This is a per-phase linear model with constant-current loads and no coupling between phases. A real study would use an AC load flow. It's a screening check on a synthetic model, and that's how I use it.</p>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-j/grid/topology.py" target="_blank" rel="noopener">labs/lab-j/grid/topology.py</a> &middot; tests: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-j/grid/test_topology.py" target="_blank" rel="noopener">test_topology.py</a></p>
+  </div>
+</section>
+
+<section id="trials">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">02</span> &nbsp;Probability and statistics &middot; Lab F</p>
+    <h2>What ten trials can tell you</h2>
+    <p>In Lab F I ran ten attacks against an AI helpdesk in six configurations and counted how often a planted secret leaked. The weakest configuration leaked once. The others scored zero. A zero from ten tries is a small sample, so I went back and put a 95% confidence interval around each count, using the exact binomial (Clopper-Pearson) method.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Configuration</th><th class="num">Leaks</th><th class="num">95% interval for the true leak rate</th></tr>
+        <tr><td class="k">naive</td><td class="num">1 / 10</td><td class="num">0.3% to 44.5%</td></tr>
+        <tr><td class="k">baseline</td><td class="num">0 / 10</td><td class="num">0% to 30.8%</td></tr>
+        <tr><td class="k">guarded</td><td class="num">0 / 10</td><td class="num">0% to 30.8%</td></tr>
+      </table>
+    </div>
+    <p>Ten clean runs can't tell a safe configuration from one that leaks one time in four. That changed how I read my own result. The baseline's zero depends on the model choosing to keep a secret, and the interval says that measurement is weak. The guarded design removed the secret from the prompt altogether, so sample size doesn't come into it.</p>
+    <p>The interval assumes identical trials, and mine were ten different attacks, so it's an approximation. The better experiment is to repeat each attack many times. Ruling out a 5% leak rate with zero leaks takes 59 clean runs, and ruling out 1% takes 299.</p>
+    <p>I wrote the binomial math out in the script without a statistics library so it can be checked line by line, then compared it against scipy. They match to four decimal places.</p>
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-f/stats.py" target="_blank" rel="noopener">labs/lab-f/stats.py</a> &middot; write-up: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-f/FINDINGS.md#finding-6-what-ten-trials-can-and-cant-tell-you" target="_blank" rel="noopener">Finding 6</a></p>
+  </div>
+</section>
+
+<section id="redaction">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">03</span> &nbsp;Measurement &middot; the redaction check</p>
+    <h2>Measuring my own redaction check</h2>
+    <p>After I found test IDs in two published screenshots, I added a CI check that reads every published image with OCR and fails on anything shaped like an identifier. One canary image proves it runs. It doesn't say how often it misses.</p>
+    <!-- MEASUREMENT -->
+    <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/ci/measure_redaction.py" target="_blank" rel="noopener">ci/measure_redaction.py</a> &middot; run: <!-- RUNLINK --></p>
+  </div>
+</section>
+
+<section id="threads">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">04</span> &nbsp;Computer architecture</p>
+    <h2>Threads, cores and a fifteen-minute CI step</h2>
+    <!-- THREADS -->
+  </div>
+</section>
+
+<section id="study">
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">05</span> &nbsp;Coursework</p>
+    <h2>What I'm studying, and where it shows up</h2>
+    <p>From my degree I have Elementary Statistics, Quantitative Methods for the Social and Physical Sciences, and Data Collection and Analysis. I don't have calculus, linear algebra, digital logic or circuits from a classroom, so this is the plan to fill them in. I started in November 2026, and I'll mark each one complete only when it is.</p>
+    <div class="tablewrap wide">
+      <table>
+        <tr><th>Area</th><th>Course</th><th>Status</th><th>Where it shows up here</th></tr>
+        <tr><td class="k">Linear algebra, calculus, probability</td><td><a href="https://www.coursera.org/specializations/mathematics-for-machine-learning-and-data-science" target="_blank" rel="noopener">Mathematics for Machine Learning and Data Science</a> (DeepLearning.AI)</td><td><span class="tag now">In progress</span></td><td>Sections 01 and 02</td></tr>
+        <tr><td class="k">Programming in C, Linux</td><td><a href="https://www.coursera.org/specializations/c-programming-linux" target="_blank" rel="noopener">C Programming with Linux</a> (Dartmouth and IMT)</td><td><span class="tag now">In progress</span></td><td>SHA-256 in C, below</td></tr>
+        <tr><td class="k">Digital logic, computer architecture</td><td><a href="https://www.coursera.org/learn/nand2tetris1" target="_blank" rel="noopener">From Nand to Tetris, Part I</a> (Hebrew University)</td><td><span class="tag next">Next</span></td><td>Sections 04 and the SHA-256 work</td></tr>
+        <tr><td class="k">Machine learning</td><td><a href="https://www.coursera.org/specializations/dartmouth-practical-machine-learning" target="_blank" rel="noopener">Practical Machine Learning: Foundations to Neural Networks</a> (Dartmouth)</td><td><span class="tag next">Next</span></td><td>Lab F, the AI attack tests</td></tr>
+        <tr><td class="k">Analog circuits</td><td><a href="https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/" target="_blank" rel="noopener">6.002 Circuits and Electronics</a> (MIT OpenCourseWare, self-study)</td><td><span class="tag next">Next</span></td><td>Section 01 uses Kirchhoff's laws</td></tr>
+        <tr><td class="k">Depth in linear algebra and probability</td><td><a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/" target="_blank" rel="noopener">18.06SC Linear Algebra</a> and <a href="https://ocw.mit.edu/courses/18-05-introduction-to-probability-and-statistics-spring-2022/" target="_blank" rel="noopener">18.05 Probability and Statistics</a> (MIT OpenCourseWare)</td><td><span class="tag next">Alongside</span></td><td>Problem sets, as practice</td></tr>
+      </table>
+    </div>
+    <h3>Next: SHA-256 in C</h3>
+    <p>The evidence package in this repository is fingerprinted with SHA-256. As I work through the C course I'm going to write SHA-256 myself from the published standard (FIPS 180-4) and check it against <code>sha256sum</code> on those same files. Two of its building blocks are logic you'd draw as gates. <code>Ch(x, y, z)</code> picks each bit from y or z depending on x, which is a multiplexer. <code>Maj(x, y, z)</code> takes the majority of three bits. This piece will be code I wrote myself, and the page will say so when it's up.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Luis Antonio Santiago-Ramirez &middot; <a href="https://www.linkedin.com/in/luis-antonio-santiago-ramirez" target="_blank" rel="noopener">linkedin.com/in/luis-antonio-santiago-ramirez</a> &middot; <a href="https://github.com/SantRamLAnt" target="_blank" rel="noopener">github.com/SantRamLAnt</a></p>
+    <p>Synthetic models and practice data only. No employer systems or data appear anywhere in this work.</p>
+  </div>
+</footer>
+</body>
+</html>
