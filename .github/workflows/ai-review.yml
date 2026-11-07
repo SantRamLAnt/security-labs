@@ -1,0 +1,103 @@
+# An AI reviewer beside the gates, measured before it's trusted. ADVISORY: never a required check.
+# Semgrep, CodeQL and a local language model (Ollama on the runner: no API key, no code leaves
+# the machine) review the same 36 files: 12 vulnerable handlers, their 12 fixes, and the 12
+# vulnerable ones with a comment telling automated reviewers to report them as safe.
+name: AI reviewer benchmark (advisory)
+# Push and manual runs only: on a pull_request event CodeQL reports data-flow findings only on lines
+# the pull request changed, and these case files are generated at run time, so it would hide them.
+on:
+  push:
+    paths: [ "ci/ai-review/**", ".github/workflows/ai-review.yml" ]
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Ollama model"
+        default: "qwen2.5-coder:7b"
+permissions:
+  contents: read
+env:
+  MODEL: ${{ inputs.model || 'qwen2.5-coder:7b' }}
+jobs:
+  prepare:
+    name: "Prepare the cases"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 ci/ai-review/prepare.py ci/ai-review/work
+      - uses: actions/upload-artifact@v4
+        with: { name: work, path: "ci/ai-review/work*", retention-days: 7 }
+
+  scanners:
+    name: "Semgrep and CodeQL on the cases"
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: work, path: ci/ai-review }
+      - name: Semgrep (same rule packs as Gate 3, plus Flask)
+        run: |
+          pip install --quiet semgrep
+          # --no-git-ignore: the generated work folder is git-ignored, and Semgrep skips ignored files by default
+          semgrep scan --config p/python --config p/flask --config p/secrets --metrics=off --no-git-ignore --json -o semgrep.json ci/ai-review/work/ || true
+          python3 -c "import json; d=json.load(open('semgrep.json')); print('semgrep scanned', len(d['paths']['scanned']), 'files,', len(d['results']), 'findings,', len(d['errors']), 'errors')"
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: python
+          build-mode: none
+          source-root: ci/ai-review/work
+          queries: security-extended
+      - uses: github/codeql-action/analyze@v4
+        with:
+          upload: never
+          output: codeql-out
+          category: ai-review-benchmark
+      - run: |
+          cp codeql-out/*.sarif codeql.sarif
+          python3 -c "import json,collections; d=json.load(open('codeql.sarif')); r=d['runs'][0]; print('codeql findings by rule:', dict(collections.Counter(x['ruleId'] for x in r['results'])))"
+      - uses: actions/upload-artifact@v4
+        with: { name: scanners, path: "semgrep.json\ncodeql.sarif", retention-days: 7 }
+
+  model:
+    name: "Local model review, repeat ${{ matrix.repeat }}"
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        repeat: [1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: work, path: ci/ai-review }
+      - name: Install Ollama and pull the model
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          # The install script starts a systemd service, and GitHub runners don't run systemd,
+          # so start the server directly if it isn't answering.
+          curl -sf http://127.0.0.1:11434/api/version || { nohup ollama serve > ollama.log 2>&1 & }
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:11434/api/version && break; sleep 2; done
+          ollama pull "$MODEL"
+      - name: Review every file
+        run: python3 ci/ai-review/review.py ci/ai-review/work ${{ matrix.repeat }} model-${{ matrix.repeat }}.json --model "$MODEL"
+      - uses: actions/upload-artifact@v4
+        with: { name: "model-${{ matrix.repeat }}", path: "model-${{ matrix.repeat }}.json", retention-days: 7 }
+
+  score:
+    name: "Score against the answer key"
+    needs: [ scanners, model ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { path: results, merge-multiple: true }
+      - name: Score
+        run: |
+          set -o pipefail
+          python3 ci/ai-review/score.py results/work-key.json results/semgrep.json results/codeql.sarif results/model-*.json | tee s.out
+          { echo '### AI reviewer benchmark (advisory)'; echo '```'; cat s.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

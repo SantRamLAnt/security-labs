@@ -1,0 +1,55 @@
+# Engineering notes: offline maths checks. No credentials, no cloud resources.
+name: Engineering · math and architecture checks
+on:
+  push:
+    branches: [ main ]
+    paths: [ "engineering/**", ".github/workflows/engineering.yml" ]
+  pull_request:
+    paths: [ "engineering/**", ".github/workflows/engineering.yml" ]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  georef:
+    name: "Engineering checks"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install --quiet numpy scikit-learn
+      - name: Fit and checks
+        run: |
+          set -o pipefail
+          python3 engineering/georef/affine_fit.py --check | tee g.out
+          { echo '### Least-squares georeferencing'; echo '```'; cat g.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Distributed load as a Riemann sum
+        run: |
+          set -o pipefail
+          python3 engineering/calculus/distributed_load.py --check | tee c.out
+          { echo '### Distributed load as a Riemann sum (MIT 18.01)'; echo '```'; cat c.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: PCA on daily load profiles
+        run: |
+          set -o pipefail
+          python3 engineering/pca/load_profiles.py --check | tee p.out
+          { echo '### PCA on daily load profiles (Imperial, DeepLearning.AI, Michigan)'; echo '```'; cat p.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Logistic regression and one hidden layer
+        run: |
+          set -o pipefail
+          python3 engineering/classifier/material_model.py --check | tee n.out
+          { echo '### Logistic regression and a hidden layer (DeepLearning.AI, Michigan)'; echo '```'; cat n.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Economic dispatch and Newton-Raphson power flow
+        run: |
+          set -o pipefail
+          python3 engineering/optimization/dispatch_and_power_flow.py --check | tee o.out
+          { echo '### Economic dispatch and power flow (KAIST, Imperial)'; echo '```'; cat o.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Interpreter and type checker
+        run: |
+          set -o pipefail
+          python3 engineering/languages/tiny_lang.py --check | tee l.out
+          { echo '### A small typed language (KAIST Programming Languages I and II)'; echo '```'; cat l.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Memory hierarchy measurement (not a pass/fail check)
+        run: |
+          set -o pipefail
+          python3 engineering/caches/memory_hierarchy.py | tee m.out
+          { echo '### Memory hierarchy (MIT 6.004, Chapter 14)'; echo '```'; cat m.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

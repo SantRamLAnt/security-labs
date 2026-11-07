@@ -21,7 +21,7 @@ detects the bypass of a control built earlier in this portfolio:
 | Legacy authentication sign-in | Lab C Conditional Access |
 
 A detection set that mirrors your own control set is a coherent security
-programme in miniature, and that coherence is the thing worth presenting.
+program in miniature, and that coherence is the thing worth presenting.
 
 ---
 
@@ -30,7 +30,7 @@ programme in miniature, and that coherence is the thing worth presenting.
 | Job requirement | Proven by |
 |---|---|
 | "Experience with SIEM" | A working workspace with rules you wrote |
-| "Monitor and analyse security events" | The hunting queries and triage notes |
+| "Monitor and analyze security events" | The hunting queries and triage notes |
 | "Threat detection" / "incident response" | Rules, incidents, and a documented triage |
 | "Knowledge of MITRE ATT&CK" | Every rule carries tactic and technique |
 | "Identify and track remediation of security findings" | The incident workflow in Step 4 |

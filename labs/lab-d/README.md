@@ -133,7 +133,7 @@ kubectl label namespace workloads \
 ```
 
 Re-apply the insecure manifest with Kyverno removed and it is still refused —
-by the platform this time. Defence in depth means a control failing open is not
+by the platform this time. Defense in depth means a control failing open is not
 the end of the story.
 
 ---

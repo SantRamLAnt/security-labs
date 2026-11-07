@@ -1,0 +1,33 @@
+# Measures the image redaction check (miss rate over 300 fresh GUIDs, and OCR time against
+# Tesseract's thread limit) on the same runner type the security gates use. Not a gate:
+# it publishes numbers, and the numbers go in the write-up with the run link.
+# Seed 20261105 (run 42155477690) found two misses; repair() was fixed for them, and the default
+# seed moved to 20261106 so the fix is measured on IDs it has never seen.
+name: Measure · image redaction check
+on:
+  workflow_dispatch:
+    inputs:
+      n: { description: "rendered GUIDs", default: "300" }
+      threads: { description: "images in the thread benchmark", default: "20" }
+      seed: { description: "seed for the rendered GUIDs", default: "20261106" }
+      repeats: { description: "timed runs per thread setting", default: "1" }
+  push:
+    paths: [ "ci/measure_redaction.py", ".github/workflows/measure-redaction.yml" ]
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tesseract and Python packages (same versions as Gates 0 and 1)
+        run: |
+          sudo apt-get install -y -qq tesseract-ocr >/dev/null
+          pip install -q pytesseract==0.3.13 pillow==11.0.0
+          tesseract --version | head -1; nproc
+      - name: Measure
+        run: |
+          set -o pipefail
+          python3 -u ci/measure_redaction.py "${{ inputs.n || 300 }}" --threads "${{ inputs.threads || 20 }}" --seed "${{ inputs.seed || 20261106 }}" --repeats "${{ inputs.repeats || 1 }}" --limit 300 | tee m.out
+          { echo '### Image redaction check measurement'; echo '```'; cat m.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

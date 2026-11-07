@@ -12,7 +12,7 @@ half: finding what is already running and wrong.
 Both are necessary and they fail differently. A pipeline gate only sees changes
 that go through the pipeline. Posture management sees everything, including the
 resource someone created by hand in the portal at 4pm on a Friday — which, in
-every organisation, is where the findings actually come from.
+every organization, is where the findings actually come from.
 
 ---
 
@@ -56,7 +56,7 @@ every organisation, is where the findings actually come from.
 - If you turn a Defender plan on to see what it does, **turn it back off the
   same day** and confirm the budget alert is in place first.
 - **Scope: your own subscription only.** Never point an assessment at an
-  employer tenant. Reading someone else's posture without written authorisation
+  employer tenant. Reading someone else's posture without written authorization
   is not research.
 
 ---
