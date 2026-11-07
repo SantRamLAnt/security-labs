@@ -1,5 +1,5 @@
 # A sixth scanner: GitHub CodeQL on the whole repository. Advisory, not one of the required gates.
-# Semgrep (Gate 3) matches patterns; CodeQL follows data from where it enters (a request
+# Python, the workflows, and the field device's C code. Semgrep (Gate 3) matches patterns; CodeQL follows data from where it enters (a request
 # parameter, say) to where it's used (a shell command), across functions. Findings go to the
 # repository's code scanning alerts. The benchmark cases are excluded: they are vulnerable on
 # purpose and are scanned separately by the AI reviewer benchmark.
@@ -23,18 +23,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ python, actions ]
+        include:
+          - { language: python, build-mode: none }
+          - { language: actions, build-mode: none }
+          - { language: c-cpp, build-mode: manual }
     steps:
       - uses: actions/checkout@v4
       - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          build-mode: none
+          build-mode: ${{ matrix.build-mode }}
           queries: security-extended
           config: |
             paths-ignore:
               - ci/ai-review/cases
               - ci/ai-review/work
+      - name: Build the C code so CodeQL can see it
+        if: matrix.language == 'c-cpp'
+        run: make -C engineering/field-device test sim
       - uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"

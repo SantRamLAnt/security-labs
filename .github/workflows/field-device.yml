@@ -1,0 +1,52 @@
+# Project 3: a field device in C. Tests with sanitizers and a million fuzzed frames, a scenario
+# driven by a Python control center and Lab J's solver, and a build for the Raspberry Pi Pico's
+# processor to measure size. No hardware: the device runs on the runner.
+name: Field device · C, tests and Cortex-M0+ build
+on:
+  push:
+    paths: [ "engineering/field-device/**", "labs/lab-j/grid/**", ".github/workflows/field-device.yml" ]
+  pull_request:
+    paths: [ "engineering/field-device/**", "labs/lab-j/grid/**", ".github/workflows/field-device.yml" ]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  device:
+    name: "Field device: tests, fuzzing, scenario, cross build"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engineering/field-device
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq gcc-arm-none-eabi > /dev/null
+          pip install --quiet numpy pyyaml
+          gcc --version | head -1; arm-none-eabi-gcc --version | head -1
+      - name: Tests and fuzzing under AddressSanitizer and UBSan
+        run: |
+          set -o pipefail
+          make test-asan
+          ./test-asan 1000000 notime | tee asan.out
+      - name: Speed (optimized build, no sanitizers)
+        run: |
+          set -o pipefail
+          make test
+          ./test 1000 | sed -n '/Speed on this machine/,$p' | tee speed.out
+      - name: Control center scenario (Python + Lab J's solver)
+        run: |
+          set -o pipefail
+          make sim
+          python3 master.py ./sim --check | tee scenario.out
+      - name: Build for the RP2040 (Arm Cortex-M0+)
+        run: |
+          set -o pipefail
+          make cross
+          python3 report_cross.py | tee cross.out
+      - name: Summary
+        if: always()
+        run: |
+          for f in asan speed scenario cross; do
+            [ -f $f.out ] || continue
+            { echo "### $f"; echo '```'; cat $f.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          done
