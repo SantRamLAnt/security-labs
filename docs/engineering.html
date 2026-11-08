@@ -347,11 +347,11 @@ section.project h2{font-size:clamp(28px,4.2vw,42px)}
     <p>Until this run I had been saying the check caught 300 of 300. That was a smaller test on a different sample, and this one missed two. Both were misreads I hadn&#8217;t seen before: OCR read an f as an asterisk, and it put an accented &#233; into the middle of an ID. I fixed both, then measured again on 300 IDs from a new seed, so the fix was tested on IDs it had never seen. It caught <strong>300 of 300</strong>, which puts the 95% upper bound on the miss rate at 0.99%.</p>
     <p>The bound comes from the same arithmetic as section 2.3: with zero misses in 300, the true miss rate could still be as high as 0.99%.</p>
     <figure>
-      <a href="img/engineering/redaction-first-run.png" target="_blank" rel="noopener"><img src="img/engineering/redaction-first-run.png" alt="GitHub Actions run page: first measurement, 298 of 300 caught after repair" loading="lazy"></a>
+      <a href="img/engineering/redaction-first-run.png" target="_blank" rel="noopener"><img style="max-width:820px" src="img/engineering/redaction-first-run.png" alt="GitHub Actions run page: first measurement, 298 of 300 caught after repair" loading="lazy"></a>
       <figcaption>The first measurement, seed 20261105. 298 of 300 after repair: the run that found the two misreads. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42155477690" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
     </figure>
     <figure>
-      <a href="img/engineering/redaction-fresh-seed.png" target="_blank" rel="noopener"><img src="img/engineering/redaction-fresh-seed.png" alt="GitHub Actions run page: measurement on a new seed after the fix, 300 of 300 caught" loading="lazy"></a>
+      <a href="img/engineering/redaction-fresh-seed.png" target="_blank" rel="noopener"><img style="max-width:820px" src="img/engineering/redaction-fresh-seed.png" alt="GitHub Actions run page: measurement on a new seed after the fix, 300 of 300 caught" loading="lazy"></a>
       <figcaption>After the fix, on IDs from a new seed: 300 of 300. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42158983727" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
     </figure>
     <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/ci/measure_redaction.py" target="_blank" rel="noopener">ci/measure_redaction.py</a> &middot; runs: <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42155477690" target="_blank" rel="noopener">first measurement</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42158983727" target="_blank" rel="noopener">after the fix, new seed</a></p>
@@ -405,7 +405,7 @@ section.project h2{font-size:clamp(28px,4.2vw,42px)}
       <figcaption>The confusion matrix and the confidence intervals, from the same run. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42264266968" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
     </figure>
     <figure>
-      <a href="img/engineering/labf-regression-run.png" target="_blank" rel="noopener"><img src="img/engineering/labf-regression-run.png" alt="GitHub Actions run page: 21 regression cases all passing" loading="lazy"></a>
+      <a href="img/engineering/labf-regression-run.png" target="_blank" rel="noopener"><img style="max-width:680px" src="img/engineering/labf-regression-run.png" alt="GitHub Actions run page: 21 regression cases all passing" loading="lazy"></a>
       <figcaption>The Lab F run for this change, with all 21 regression cases. Case 1 is the real reply from the 31 October test. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42264266968" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
     </figure>
     <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-f/stats.py" target="_blank" rel="noopener">labs/lab-f/stats.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-f/test_misinformation.py" target="_blank" rel="noopener">test_misinformation.py</a> &middot; write-up: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/labs/lab-f/FINDINGS.md#finding-6-what-ten-trials-can-and-cant-tell-you" target="_blank" rel="noopener">Finding 6</a></p>
@@ -506,7 +506,7 @@ section.project h2{font-size:clamp(28px,4.2vw,42px)}
     <p>The held-back points give the more realistic number, because the RMS Pro shows is measured on the same points the fit was built from. Refitting without each point in turn finds the mistyped one: it lands 5.00 m from the fit of the other eight. Until it&#8217;s removed it also pulls every other point off, by as much as 1.08 m.</p>
     <p>Two ideas from 18.06 show up directly. The normal equations work with A<sup>T</sup>A, whose condition number is the square of A&#8217;s: about 150 million on raw pixel coordinates against 12,000 for A. Centering the coordinates first brings A down to about 2,900, and QR avoids forming A<sup>T</sup>A at all. QR, the normal equations and numpy&#8217;s solver agree here to 1e-12, because the problem is small.</p>
     <figure>
-      <a href="img/engineering/georef-run.png" target="_blank" rel="noopener"><img src="img/engineering/georef-run.png" alt="GitHub Actions run page: least-squares georeferencing checks passing" loading="lazy"></a>
+      <a href="img/engineering/georef-run.png" target="_blank" rel="noopener"><img style="max-width:810px" src="img/engineering/georef-run.png" alt="GitHub Actions run page: least-squares georeferencing checks passing" loading="lazy"></a>
       <figcaption>The least-squares checks running on GitHub. <a href="https://github.com/SantRamLAnt/security-labs/actions/runs/42264267048" target="_blank" rel="noopener">Open on GitHub</a></figcaption>
     </figure>
     <p class="src">Source: <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/georef/affine_fit.py" target="_blank" rel="noopener">engineering/georef/affine_fit.py</a> &middot; <a href="https://github.com/SantRamLAnt/security-labs/blob/main/engineering/georef/README.md" target="_blank" rel="noopener">write-up</a></p>
