@@ -1,9 +1,8 @@
 # PCA on daily load profiles
 
 `load_profiles.py` runs principal component analysis on 600 made-up smart-meter customers, each
-a day of 24 hourly readings. It follows Imperial College London's *Mathematics for Machine
-Learning: PCA*, the eigenvalue material in HKUST's *Matrix Algebra for Engineers*, and the
-dimensionality reduction and clustering part of Michigan's *Applied Machine
+a day of 24 hourly readings. It follows the eigenvalue material in HKUST's *Matrix Algebra for
+Engineers* and the dimensionality reduction and clustering part of Michigan's *Applied Machine
 Learning in Python*.
 
 There are three kinds of customer: residential (a morning bump and an evening peak), commercial

@@ -32,7 +32,7 @@ jobs:
         run: |
           set -o pipefail
           python3 engineering/pca/load_profiles.py --check | tee p.out
-          { echo '### PCA on daily load profiles (Imperial, HKUST, Michigan)'; echo '```'; cat p.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo '### PCA on daily load profiles (HKUST, Michigan)'; echo '```'; cat p.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Logistic regression and one hidden layer
         run: |
           set -o pipefail
