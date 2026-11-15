@@ -2,8 +2,6 @@
 """Principal component analysis of daily load profiles.
 
 Course material this follows:
-  Imperial College London, Mathematics for Machine Learning: PCA (all four modules: statistics of
-    datasets, inner products, orthogonal projections, PCA)
   HKUST, Matrix Algebra for Engineers (eigenvalues and eigenvectors, diagonalization)
   University of Michigan, Applied Machine Learning in Python, module 4 (dimensionality reduction,
     clustering)
