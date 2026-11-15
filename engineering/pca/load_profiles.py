@@ -4,8 +4,7 @@
 Course material this follows:
   Imperial College London, Mathematics for Machine Learning: PCA (all four modules: statistics of
     datasets, inner products, orthogonal projections, PCA)
-  DeepLearning.AI, Linear Algebra for Machine Learning and Data Science, week 4 (eigenvalues,
-    covariance matrix, PCA)
+  HKUST, Matrix Algebra for Engineers (eigenvalues and eigenvectors, diagonalization)
   University of Michigan, Applied Machine Learning in Python, module 4 (dimensionality reduction,
     clustering)
 

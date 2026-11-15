@@ -24,7 +24,7 @@ jobs:
       - name: Install tesseract and Python packages (same versions as Gates 0 and 1)
         run: |
           sudo apt-get install -y -qq tesseract-ocr >/dev/null
-          pip install -q pytesseract==0.3.13 pillow==11.0.0
+          pip install -q pytesseract==0.3.13 pillow==12.0.0
           tesseract --version | head -1; nproc
       - name: Measure
         run: |

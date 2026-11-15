@@ -2,18 +2,12 @@
 """Logistic regression and a one-hidden-layer network, written out in NumPy.
 
 Course material this follows:
-  DeepLearning.AI, Neural Networks and Deep Learning, week 2 (logistic regression as a neural
-    network, vectorization, gradient descent) and week 3 (one hidden layer, backpropagation,
-    random initialization)
-  DeepLearning.AI, Calculus for Machine Learning and Data Science, weeks 2 and 3 (gradient descent,
-    Newton's method, the Hessian)
-  Imperial College London, Mathematics for Machine Learning: Multivariate Calculus, module 3
-    (multivariate chain rule, backpropagation)
+  IBM, Machine Learning with Python (logistic regression and classification)
+  Imperial College London, Mathematics for Machine Learning: Multivariate Calculus (multivariate
+    chain rule and backpropagation, gradient descent, Newton-Raphson, the Hessian)
   University of Michigan, Applied Machine Learning in Python, modules 2 and 3 (feature scaling,
     logistic regression, cross-validation, confusion matrices, precision-recall and ROC curves,
     choosing a threshold for the metric that matters)
-  DeepLearning.AI, Probability and Statistics for Machine Learning, week 3 (maximum likelihood:
-    log-loss is the negative log-likelihood of a Bernoulli model)
 
 The problem: gas distribution records sometimes have the pipe material missing, and federal
 integrity rules (49 CFR 192.1007) make operators deal with unknowns. Install year and diameter say

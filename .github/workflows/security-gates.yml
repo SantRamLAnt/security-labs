@@ -97,7 +97,7 @@ jobs:
       - name: Image redaction check must still catch a freshly generated GUID
         run: |
           sudo apt-get install -y -qq tesseract-ocr >/dev/null
-          pip install -q pytesseract==0.3.13 pillow==11.0.0
+          pip install -q pytesseract==0.3.13 pillow==12.0.0
           set -o pipefail
           python3 ci/image_canary.py | tee canary.out
           { echo '### Gate 0 image-redaction canary'; echo '```'; cat canary.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
@@ -121,7 +121,7 @@ jobs:
         if: success() || failure()
         run: |
           sudo apt-get install -y -qq tesseract-ocr >/dev/null
-          pip install -q pytesseract==0.3.13 pillow==11.0.0
+          pip install -q pytesseract==0.3.13 pillow==12.0.0
           set +e
           python3 ci/image_scan.py | tee images.out
           rc=${PIPESTATUS[0]}
