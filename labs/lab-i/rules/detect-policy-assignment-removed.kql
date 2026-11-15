@@ -75,5 +75,4 @@ AzureActivity
 // | order by TimeGenerated asc
 //
 // That join — control removed, then resource created — is the sequence worth
-// alerting on in a real environment, and it is a better interview answer than
-// either event alone.
+// alerting on in a real environment. It says more than either event alone.

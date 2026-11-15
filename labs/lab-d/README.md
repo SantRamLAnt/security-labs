@@ -10,8 +10,7 @@ An AKS cluster costs real money per hour and you would learn nothing extra from
 it. Every control in this lab — admission policy, pod security standards, image
 scanning, the deny decision itself — is identical on a local `kind` cluster.
 
-Being able to explain *that* choice is itself the senior answer. The thing being
-tested is the admission controller, not Azure's bill.
+The thing being tested is the admission controller, not Azure's bill.
 
 If you later want the AKS line on the board: create a one-node cluster, apply
 the same manifests, screenshot, `az aks delete`. Under an hour, a few dollars.

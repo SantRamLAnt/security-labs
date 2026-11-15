@@ -159,15 +159,13 @@ Take the incident the key-listing rule raised and work it as a real one:
 2. **Scope** — what else did that principal do in the surrounding window? One
    KQL query, pivoted on caller, not a guess.
 3. **Determine** — true positive, benign true positive, or false positive. Say
-   which and why. "Benign true positive" is the honest verdict here and using
-   the term correctly signals real SOC exposure.
+   which and why. "Benign true positive" is the verdict here: the activity
+   happened and the rule was correct.
 4. **Respond** — if it were malicious: rotate the key, revoke the principal's
    sessions, check for resources created, preserve the activity log.
 5. **Close** with a classification and a one-paragraph note.
 
-**EVIDENCE 4:** the closed incident with your written determination. **This is
-the single most valuable artifact in the lab** — anyone can write a rule; being
-able to show a worked triage is what a SOC manager is actually hiring for.
+**EVIDENCE 4:** the closed incident with the written determination.
 
 ---
 
