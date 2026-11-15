@@ -39,7 +39,7 @@ AzureActivity
 // ---------------------------------------------------------------------
 // 1. You, retrieving the key to run the Lab F suite. This is a BENIGN TRUE
 //    POSITIVE, not a false positive — the activity happened and the rule is
-//    correct. Use the term precisely; it signals real SOC exposure.
+//    correct.
 // 2. A CI/CD pipeline or deployment script fetching the key at build time.
 //    That is an architecture finding, not alert noise: the pipeline should use
 //    a managed identity and Entra token, not a static key.

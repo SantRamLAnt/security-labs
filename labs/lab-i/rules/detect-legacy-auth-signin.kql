@@ -14,11 +14,9 @@
 // the Azure Activity connector only, deliberately, to keep ingestion near zero.
 //
 // The rule is included complete so the detection set is coherent, and marked
-// as not-run so nothing here is overclaimed. In an interview: "I wrote it, I
-// didn't run it, because enabling that connector in a personal subscription
-// costs more than the lab is worth — here is the query and here is what it
-// would catch." That answer is stronger than quietly presenting five rules as
-// though all five were live.
+// as not-run so nothing here is overclaimed. I wrote it and did not run it,
+// because enabling that connector in a personal subscription costs more than
+// the lab is worth. The query and what it would catch are below.
 //
 // WHY THIS RULE MATTERS
 // Legacy authentication protocols — POP, IMAP, SMTP AUTH, older Exchange and

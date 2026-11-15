@@ -69,8 +69,7 @@ AzureDiagnostics
 //
 // The correct framing: this rule is real in a system with real traffic, and in
 // a lab it is a demonstration of the technique. Say that rather than presenting
-// a lab anomaly score as a finding. Overclaiming on a detection is the fastest
-// way to lose a technical interviewer.
+// a lab anomaly score as a finding.
 //
 // ---------------------------------------------------------------------
 // THE SIMPLER RULE THAT IS OFTEN BETTER

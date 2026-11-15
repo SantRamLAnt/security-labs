@@ -62,7 +62,7 @@ a follow-up question.
 - What you *can* do free: build the classification scheme, write the policy
   design, and implement the storage-side controls in Azure (encryption,
   private endpoints, access scoping) that enforce the same intent.
-- **Synthetic data only.** No Eversource data, no customer records, no exports
+- **Synthetic data only.** No employer data, no customer records, no exports
   from a work system — not into a personal tenant, not into a personal mailbox,
   not into any AI service. This is not caution, it is the rule that makes the
   rest of the portfolio defensible.
