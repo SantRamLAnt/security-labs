@@ -3,8 +3,7 @@
 `dispatch_and_power_flow.py` works two standard power-system problems with the calculus from
 KAIST's *Applied Math for Materials Science and Engineering* (maxima and minima, Lagrange
 multipliers, differentiating with respect to a parameter), Imperial's *Multivariate Calculus*
-(Jacobian, Hessian, Taylor linearization, Newton-Raphson) and week 3 of DeepLearning.AI's
-*Calculus for Machine Learning and Data Science*. All numbers are synthetic.
+(Jacobian, Hessian, Taylor linearization, Newton-Raphson). All numbers are synthetic.
 
 ## Economic dispatch
 

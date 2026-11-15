@@ -1,10 +1,9 @@
 # Logistic regression and one hidden layer, written out
 
 `material_model.py` estimates whether a gas main is metallic or plastic from its install year and
-diameter. It follows weeks 2 and 3 of DeepLearning.AI's *Neural Networks and Deep Learning*,
-gradient descent and Newton's method from DeepLearning.AI's *Calculus for Machine Learning and
-Data Science*, backpropagation from Imperial's *Multivariate Calculus*, and the evaluation module
-of Michigan's *Applied Machine Learning in Python*.
+diameter. It follows logistic regression and classification from IBM's *Machine Learning with
+Python*, gradient descent, Newton's method and backpropagation from Imperial's *Multivariate
+Calculus*, and the evaluation module of Michigan's *Applied Machine Learning in Python*.
 
 The 3,000 records are made up. The rules that generate them are in the script: cast iron and
 steel before about 1970, plastic phased in over the 1970s, steel kept for mains 12 inches and

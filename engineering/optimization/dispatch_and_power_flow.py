@@ -7,8 +7,6 @@ Course material this follows:
   Imperial College London, Mathematics for Machine Learning: Multivariate Calculus, modules 2, 4
     and 5 (the Jacobian and Hessian, Taylor series and linearisation, Newton-Raphson, Lagrange
     multipliers)
-  DeepLearning.AI, Calculus for Machine Learning and Data Science, week 3 (Newton's method, the
-    Hessian and concavity)
 
 Part 1, economic dispatch. Three generators with quadratic fuel costs C_i(P) = a_i + b_i P + c_i P^2
 must together supply a demand D. Minimizing total cost subject to P_1 + P_2 + P_3 = D with a
